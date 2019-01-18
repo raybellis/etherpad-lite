@@ -21,6 +21,7 @@ function wrapTaskCb(cb) {
   tasks++
   return function() {
     cb && cb.apply(this, arguments);
+console.log(tasks);
     tasks--;
     if(tasks == 0) onAllTasksFinished();
   }
@@ -35,10 +36,10 @@ exports.uninstall = function(plugin_name, cb) {
     if (er) return cb && cb(er);
     npm.commands.uninstall([plugin_name], function (er) {
       if (er) return cb && cb(er);
-      hooks.aCallAll("pluginUninstall", {plugin_name: plugin_name}, function (er, data) {
-        if (er) return cb(er);
-        plugins.update(cb);
-      });
+      hooks.aCallAll("pluginUninstall", {plugin_name: plugin_name})
+        .then(plugins.update)
+        .then(() => cb(null))
+        .catch((er) => cb(er));
     });
   });
 };
@@ -49,10 +50,10 @@ exports.install = function(plugin_name, cb) {
     if (er) return cb && cb(er);
     npm.commands.install([plugin_name], function (er) {
       if (er) return cb && cb(er);
-      hooks.aCallAll("pluginInstall", {plugin_name: plugin_name}, function (er, data) {
-        if (er) return cb(er);
-        plugins.update(cb);
-      });
+      hooks.aCallAll("pluginInstall", {plugin_name: plugin_name})
+        .then(plugins.update)
+        .then(() => cb(null))
+        .catch((er) => cb(er));
     });
   });
 };
