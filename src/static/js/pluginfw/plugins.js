@@ -65,7 +65,7 @@ exports.callInit = function () {
     let ep_init = path.normalize(path.join(plugin.package.path, ".ep_initialized"));
     return fsp_stat(ep_init).catch(async function() {
       await fsp_writeFile(ep_init, "done");
-      await hooks.aCallAll_P("init_" + plugin_name, {});
+      await hooks.aCallAll("init_" + plugin_name, {});
     });
   });
 
