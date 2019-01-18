@@ -22,75 +22,61 @@
  */
 
 var log4js = require('log4js')
-  , async = require('async')
-  , stats = require('./stats')
   , NodeVersion = require('./utils/NodeVersion')
   ;
 
 log4js.replaceConsole();
 
+/*
+ * early check for version compatibility before calling
+ * any modules that require newer versions of NodeJS
+ */
+NodeVersion.enforceMinNodeVersion('8.0.0');
+NodeVersion.checkDeprecationStatus('8.9.0', '1.8.0');
+
+var stats = require('./stats');
+
 stats.gauge('memoryUsage', function() {
   return process.memoryUsage().rss
 })
 
-var settings
-  , db
-  , plugins
-  , hooks;
-var npm = require("npm/lib/npm.js");
+var npm = require("npm/lib/npm.js")
+  , util = require('util')
+  ;
 
-async.waterfall([
-  function(callback)
-  {
-    NodeVersion.enforceMinNodeVersion('6.9.0', callback);
-  },
+/*
+ * no use of await here because it would cause startup
+ * to fail completely on early versions of NodeJS
+ */
+var promisify = require('util').promisify;
+var npm_load = promisify(npm.load);
 
-  function(callback)
-  {
-    NodeVersion.checkDeprecationStatus('8.9.0', '1.8.0', callback);
-  },
+npm_load({}).then(function() {
 
-  // load npm
-  function(callback) {
-    npm.load({}, function(er) {
-      callback(er)
-    })
-  },
+  var settings = require('./utils/Settings');
+  var db = require('./db/DB');
+  var plugins = require("ep_etherpad-lite/static/js/pluginfw/plugins");
+  var hooks = require("ep_etherpad-lite/static/js/pluginfw/hooks");
+  hooks.plugins = plugins;
 
-  // load everything
-  function(callback) {
-    settings = require('./utils/Settings');
-    db = require('./db/DB');
-    plugins = require("ep_etherpad-lite/static/js/pluginfw/plugins");
-    hooks = require("ep_etherpad-lite/static/js/pluginfw/hooks");
-    hooks.plugins = plugins;
-    callback();
-  },
-
-  //initalize the database
-  function (callback)
-  {
-    db.init(callback);
-  },
-
-  function(callback) {
-    plugins.update(callback)
-  },
-
-  function (callback) {
+  db.init()
+  .then(plugins.update)
+  .then(function() {
     console.info("Installed plugins: " + plugins.formatPluginsWithVersion());
     console.debug("Installed parts:\n" + plugins.formatParts());
     console.debug("Installed hooks:\n" + plugins.formatHooks());
 
     // Call loadSettings hook
     hooks.aCallAll("loadSettings", { settings: settings });
-    callback();
-  },
 
-  //initalize the http server
-  function (callback)
-  {
+    // initalize the http server
     hooks.callAll("createServer", {});
-    callback(null);
+  });
+
+}).catch(function(e) {
+  console.error("exception thrown: " + e.message);
+  if (e.stack) {
+    console.log(e.stack);
   }
-]);
+  process.exit(1);
+});
