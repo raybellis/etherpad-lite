@@ -34,20 +34,19 @@ log4js.replaceConsole();
 NodeVersion.enforceMinNodeVersion('8.0.0');
 NodeVersion.checkDeprecationStatus('8.9.0', '1.8.0');
 
+/*
+ * start up stats counting system
+ */
 var stats = require('./stats');
-
 stats.gauge('memoryUsage', function() {
   return process.memoryUsage().rss
 })
-
-var npm = require("npm/lib/npm.js")
-  , util = require('util')
-  ;
 
 /*
  * no use of await here because it would cause startup
  * to fail completely on early versions of NodeJS
  */
+var npm = require("npm/lib/npm.js");
 var promisify = require('util').promisify;
 var npm_load = promisify(npm.load);
 
