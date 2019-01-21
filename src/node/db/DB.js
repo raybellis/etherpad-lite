@@ -68,6 +68,6 @@ exports.init = function(callback)
   } else if (typeof callback === "function") {
     init(callback);
   } else {
-    throw TypeError("DB.init callback parameter");
+    throw new TypeError("DB.init callback parameter");
   }
 }
