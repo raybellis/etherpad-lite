@@ -21,7 +21,6 @@ function wrapTaskCb(cb) {
   tasks++
   return function() {
     cb && cb.apply(this, arguments);
-console.log(tasks);
     tasks--;
     if(tasks == 0) onAllTasksFinished();
   }
