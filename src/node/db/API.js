@@ -32,6 +32,7 @@ var exportTxt = require("../utils/ExportTxt");
 var importHtml = require("../utils/ImportHtml");
 var cleanText = require("./Pad").cleanText;
 var PadDiff = require("../utils/padDiff");
+const thenify = require("thenify").withCallback;
 
 /**********************/
 /**GROUP FUNCTIONS*****/
@@ -102,14 +103,14 @@ Example returns:
 }
 
 */
-exports.getAttributePool = function (padID, callback) 
+exports.getAttributePool = thenify(function (padID, callback) 
 {
   getPadSafe(padID, true, function(err, pad)
   {
     if (ERR(err, callback)) return;
     callback(null, {pool: pad.pool});
   });
-}
+});
 
 /**
 getRevisionChangeset (padID, [rev])
@@ -194,7 +195,7 @@ exports.getRevisionChangeset = function(padID, rev, callback)
       callback(null, changeset);
     })
   });
-}
+};
 
 /**
 getText(padID, [rev]) returns the text of a pad 
@@ -283,7 +284,7 @@ Example returns:
 {code: 1, message:"padID does not exist", data: null}
 {code: 1, message:"text too long", data: null}
 */
-exports.setText = function(padID, text, callback)
+exports.setText = thenify(function(padID, text, callback)
 {    
   //text is required
   if(typeof text != "string")
@@ -303,7 +304,7 @@ exports.setText = function(padID, text, callback)
     //update the clients on the pad
     padMessageHandler.updatePadClients(pad, callback);
   });
-}
+});
 
 /**
 appendText(padID, text) appends text to a pad
@@ -314,7 +315,7 @@ Example returns:
 {code: 1, message:"padID does not exist", data: null}
 {code: 1, message:"text too long", data: null}
 */
-exports.appendText = function(padID, text, callback)
+exports.appendText = thenify(function(padID, text, callback)
 {
   //text is required
   if(typeof text != "string")
@@ -333,7 +334,7 @@ exports.appendText = function(padID, text, callback)
     //update the clients on the pad
     padMessageHandler.updatePadClients(pad, callback);
   });
-};
+});
 
 
 
@@ -423,7 +424,7 @@ Example returns:
 {code: 0, message:"ok", data: null}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.setHTML = function(padID, html, callback)
+exports.setHTML = thenify(function(padID, html, callback)
 {
   //html is required
   if(typeof html != "string")
@@ -448,7 +449,7 @@ exports.setHTML = function(padID, html, callback)
       padMessageHandler.updatePadClients(pad, callback);
     });
   });
-}
+});
 
 /******************/
 /**CHAT FUNCTIONS */
@@ -466,7 +467,7 @@ Example returns:
 
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.getChatHistory = function(padID, start, end, callback)
+exports.getChatHistory = thenify(function(padID, start, end, callback)
 {
   if(start && end)
   {
@@ -519,7 +520,7 @@ exports.getChatHistory = function(padID, start, end, callback)
         callback(null, {messages: msgs});
       });
   });
-}
+});
 
 /**
 appendChatMessage(padID, text, authorID, time), creates a chat message for the pad id, time is a timestamp
@@ -529,7 +530,7 @@ Example returns:
 {code: 0, message:"ok", data: null}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.appendChatMessage = function(padID, text, authorID, time, callback)
+exports.appendChatMessage = thenify(function(padID, text, authorID, time, callback)
 {
   //text is required
   if(typeof text != "string")
@@ -550,7 +551,7 @@ exports.appendChatMessage = function(padID, text, authorID, time, callback)
   padMessage.sendChatMessageToPadClients(parseInt(time), authorID, text, padID);
 
   callback();
-}
+});
 
 /*****************/
 /**PAD FUNCTIONS */
@@ -564,7 +565,7 @@ Example returns:
 {code: 0, message:"ok", data: {revisions: 56}}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.getRevisionsCount = function(padID, callback)
+exports.getRevisionsCount = thenify(function(padID, callback)
 {
   //get the pad
   getPadSafe(padID, true, function(err, pad)
@@ -573,7 +574,7 @@ exports.getRevisionsCount = function(padID, callback)
     
     callback(null, {revisions: pad.getHeadRevisionNumber()});
   });
-}
+});
 
 /**
 getSavedRevisionsCount(padID) returns the number of saved revisions of this pad
@@ -583,7 +584,7 @@ Example returns:
 {code: 0, message:"ok", data: {savedRevisions: 42}}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.getSavedRevisionsCount = function(padID, callback)
+exports.getSavedRevisionsCount = thenify(function(padID, callback)
 {
   //get the pad
   getPadSafe(padID, true, function(err, pad)
@@ -592,7 +593,7 @@ exports.getSavedRevisionsCount = function(padID, callback)
 
     callback(null, {savedRevisions: pad.getSavedRevisionsNumber()});
   });
-}
+});
 
 /**
 listSavedRevisions(padID) returns the list of saved revisions of this pad
@@ -602,7 +603,7 @@ Example returns:
 {code: 0, message:"ok", data: {savedRevisions: [2, 42, 1337]}}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.listSavedRevisions = function(padID, callback)
+exports.listSavedRevisions = thenify(function(padID, callback)
 {
   //get the pad
   getPadSafe(padID, true, function(err, pad)
@@ -611,7 +612,7 @@ exports.listSavedRevisions = function(padID, callback)
 
     callback(null, {savedRevisions: pad.getSavedRevisionsList()});
   });
-}
+});
 
 /**
 saveRevision(padID) returns the list of saved revisions of this pad
@@ -692,7 +693,7 @@ Example returns:
 {code: 0, message:"ok", data: {lastEdited: 1340815946602}}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.getLastEdited = function(padID, callback)
+exports.getLastEdited = thenify(function(padID, callback)
 {
   //get the pad
   getPadSafe(padID, true, function(err, pad)
@@ -703,7 +704,7 @@ exports.getLastEdited = function(padID, callback)
       callback(null, {lastEdited: value});
     });
   });
-}
+});
 
 /**
 createPad(padName [, text]) creates a new pad in this group 
@@ -713,7 +714,7 @@ Example returns:
 {code: 0, message:"ok", data: null}
 {code: 1, message:"pad does already exist", data: null}
 */
-exports.createPad = function(padID, text, callback)
+exports.createPad = thenify(function(padID, text, callback)
 {  
   //ensure there is no $ in the padID
   if(padID)
@@ -738,7 +739,7 @@ exports.createPad = function(padID, text, callback)
     if(ERR(err, callback)) return;
     callback();
   });
-}
+});
 
 /**
 deletePad(padID) deletes a pad 
@@ -748,7 +749,7 @@ Example returns:
 {code: 0, message:"ok", data: null}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.deletePad = function(padID, callback)
+exports.deletePad = thenify(function(padID, callback)
 {
   getPadSafe(padID, true, function(err, pad)
   {
@@ -756,7 +757,7 @@ exports.deletePad = function(padID, callback)
     
     pad.remove(callback);
   });
-}
+});
 /**
  restoreRevision(padID, [rev]) Restores revision from past as new changeset
 
@@ -765,7 +766,7 @@ exports.deletePad = function(padID, callback)
  {code:0, message:"ok", data:null}
  {code: 1, message:"padID does not exist", data: null}
  */
-exports.restoreRevision = function (padID, rev, callback)
+exports.restoreRevision = thenify(function (padID, rev, callback)
 {
   var Changeset = require("ep_etherpad-lite/static/js/Changeset");
   var padMessage = require("ep_etherpad-lite/node/handler/PadMessageHandler.js");
@@ -865,7 +866,7 @@ exports.restoreRevision = function (padID, rev, callback)
     });
 
   });
-};
+});
 
 /**
 copyPad(sourceID, destinationID[, force=false]) copies a pad. If force is true, 
@@ -876,7 +877,7 @@ Example returns:
 {code: 0, message:"ok", data: {padID: destinationID}}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.copyPad = function(sourceID, destinationID, force, callback)
+exports.copyPad = thenify(function(sourceID, destinationID, force, callback)
 {
   getPadSafe(sourceID, true, function(err, pad)
   {
@@ -884,7 +885,7 @@ exports.copyPad = function(sourceID, destinationID, force, callback)
     
     pad.copy(destinationID, force, callback);
   });
-}
+});
 
 /**
 movePad(sourceID, destinationID[, force=false]) moves a pad. If force is true, 
@@ -895,7 +896,7 @@ Example returns:
 {code: 0, message:"ok", data: {padID: destinationID}}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.movePad = function(sourceID, destinationID, force, callback)
+exports.movePad = thenify(function(sourceID, destinationID, force, callback)
 {
   getPadSafe(sourceID, true, function(err, pad)
   {
@@ -906,7 +907,7 @@ exports.movePad = function(sourceID, destinationID, force, callback)
       pad.remove(callback);
     });
   });
-}
+});
 /**
 getReadOnlyLink(padID) returns the read only link of a pad 
 
@@ -915,7 +916,7 @@ Example returns:
 {code: 0, message:"ok", data: null}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.getReadOnlyID = function(padID, callback)
+exports.getReadOnlyID = thenify(function(padID, callback)
 {
   //we don't need the pad object, but this function does all the security stuff for us
   getPadSafe(padID, true, function(err)
@@ -929,7 +930,7 @@ exports.getReadOnlyID = function(padID, callback)
       callback(null, {readOnlyID: readOnlyId});
     });
   });
-}
+});
 
 /**
 getPadID(roID) returns the padID of a pad based on the readonlyID(roID)
@@ -939,7 +940,7 @@ Example returns:
 {code: 0, message:"ok", data: {padID: padID}}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.getPadID = function(roID, callback)
+exports.getPadID = thenify(function(roID, callback)
 {
   //get the PadId
   readOnlyManager.getPadId(roID, function(err, retrievedPadID)
@@ -954,7 +955,7 @@ exports.getPadID = function(roID, callback)
 
     callback(null, {padID: retrievedPadID});
   });
-}
+});
 
 /**
 setPublicStatus(padID, publicStatus) sets a boolean for the public status of a pad 
@@ -964,7 +965,7 @@ Example returns:
 {code: 0, message:"ok", data: null}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.setPublicStatus = function(padID, publicStatus, callback)
+exports.setPublicStatus = thenify(function(padID, publicStatus, callback)
 {
   //ensure this is a group pad
   if(padID && padID.indexOf("$") == -1)
@@ -987,7 +988,7 @@ exports.setPublicStatus = function(padID, publicStatus, callback)
     
     callback();
   });
-}
+});
 
 /**
 getPublicStatus(padID) return true of false 
@@ -997,7 +998,7 @@ Example returns:
 {code: 0, message:"ok", data: {publicStatus: true}}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.getPublicStatus = function(padID, callback)
+exports.getPublicStatus = thenify(function(padID, callback)
 {
   //ensure this is a group pad
   if(padID && padID.indexOf("$") == -1)
@@ -1013,7 +1014,7 @@ exports.getPublicStatus = function(padID, callback)
     
     callback(null, {publicStatus: pad.getPublicStatus()});
   });
-}
+});
 
 /**
 setPassword(padID, password) returns ok or a error message 
@@ -1023,7 +1024,7 @@ Example returns:
 {code: 0, message:"ok", data: null}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.setPassword = function(padID, password, callback)
+exports.setPassword = thenify(function(padID, password, callback)
 {
   //ensure this is a group pad
   if(padID && padID.indexOf("$") == -1)
@@ -1042,7 +1043,7 @@ exports.setPassword = function(padID, password, callback)
     
     callback();
   });
-}
+});
 
 /**
 isPasswordProtected(padID) returns true or false 
@@ -1052,7 +1053,7 @@ Example returns:
 {code: 0, message:"ok", data: {passwordProtection: true}}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.isPasswordProtected = function(padID, callback)
+exports.isPasswordProtected = thenify(function(padID, callback)
 {
   //ensure this is a group pad
   if(padID && padID.indexOf("$") == -1)
@@ -1068,7 +1069,7 @@ exports.isPasswordProtected = function(padID, callback)
     
     callback(null, {isPasswordProtected: pad.isPasswordProtected()});
   });
-}
+});
 
 /**
 listAuthorsOfPad(padID) returns an array of authors who contributed to this pad 
@@ -1078,7 +1079,7 @@ Example returns:
 {code: 0, message:"ok", data: {authorIDs : ["a.s8oes9dhwrvt0zif", "a.akf8finncvomlqva"]}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.listAuthorsOfPad = function(padID, callback)
+exports.listAuthorsOfPad = thenify(function(padID, callback)
 {
   //get the pad
   getPadSafe(padID, true, function(err, pad)
@@ -1087,7 +1088,7 @@ exports.listAuthorsOfPad = function(padID, callback)
     
     callback(null, {authorIDs: pad.getAllAuthors()});
   });
-}
+});
 
 /**
 sendClientsMessage(padID, msg) sends a message to all clients connected to the
@@ -1112,7 +1113,7 @@ Example returns:
 {code: 1, message:"padID does not exist"}
 */
 
-exports.sendClientsMessage = function (padID, msg, callback) {
+exports.sendClientsMessage = thenify(function (padID, msg, callback) {
   getPadSafe(padID, true, function (err, pad) {
     if (ERR(err, callback)) {
       return;
@@ -1120,7 +1121,7 @@ exports.sendClientsMessage = function (padID, msg, callback) {
 
     padMessageHandler.handleCustomMessage(padID, msg, callback);
   } );
-}
+});
 
 /**
 checkToken() returns ok when the current api token is valid
@@ -1130,10 +1131,10 @@ Example returns:
 {"code":0,"message":"ok","data":null}
 {"code":4,"message":"no or wrong API Key","data":null}
 */
-exports.checkToken = function(callback)
+exports.checkToken = thenify(function(callback)
 {
   callback();
-}
+});
 
 /**
 getChatHead(padID) returns the chatHead (last number of the last chat-message) of the pad
@@ -1143,7 +1144,7 @@ Example returns:
 {code: 0, message:"ok", data: {chatHead: 42}}
 {code: 1, message:"padID does not exist", data: null}
 */
-exports.getChatHead = function(padID, callback)
+exports.getChatHead = thenify(function(padID, callback)
 {
   //get the pad
   getPadSafe(padID, true, function(err, pad)
@@ -1151,7 +1152,7 @@ exports.getChatHead = function(padID, callback)
     if(ERR(err, callback)) return;
     callback(null, {chatHead: pad.chatHead});
   });
-}
+});
 
 /**
 createDiffHTML(padID, startRev, endRev) returns an object of diffs from 2 points in a pad
@@ -1161,7 +1162,7 @@ Example returns:
 {"code":0,"message":"ok","data":{"html":"<style>\n.authora_HKIv23mEbachFYfH {background-color: #a979d9}\n.authora_n4gEeMLsv1GivNeh {background-color: #a9b5d9}\n.removed {text-decoration: line-through; -ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=80)'; filter: alpha(opacity=80); opacity: 0.8; }\n</style>Welcome to Etherpad!<br><br>This pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!<br><br>Get involved with Etherpad at <a href=\"http&#x3a;&#x2F;&#x2F;etherpad&#x2e;org\">http:&#x2F;&#x2F;etherpad.org</a><br><span class=\"authora_HKIv23mEbachFYfH\">aw</span><br><br>","authors":["a.HKIv23mEbachFYfH",""]}}
 {"code":4,"message":"no or wrong API Key","data":null}
 */
-exports.createDiffHTML = function(padID, startRev, endRev, callback){
+exports.createDiffHTML = thenify(function(padID, startRev, endRev, callback){
   //check if rev is a number
   if(startRev !== undefined && typeof startRev != "number")
   {
@@ -1227,7 +1228,7 @@ exports.createDiffHTML = function(padID, startRev, endRev, callback){
       callback(err, {html: html, authors: authors})
     });
   });
-}
+});
 
 /******************************/
 /** INTERNAL HELPER FUNCTIONS */

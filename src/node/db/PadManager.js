@@ -22,6 +22,7 @@ var ERR = require("async-stacktrace");
 var customError = require("../utils/customError");
 var Pad = require("../db/Pad").Pad;
 var db = require("./DB").db;
+const thenify = require("thenify").withCallback;
 
 /** 
  * A cache of all loaded Pads.
@@ -54,7 +55,7 @@ var padList = {
   list: [],
   sorted : false,
   initiated: false,
-  init: function(cb)
+  init: thenify(function(cb)
   {
     db.findKeys("pad:*", "*:*:*", function(err, dbData)
     {
@@ -68,15 +69,15 @@ var padList = {
       }
     });
     return this;
-  },
-  load: function(cb) {
+  }),
+  load: thenify(function(cb) {
     if(this.initiated) cb && cb()
     else this.init(cb)
-  },
+  }),
   /**
    * Returns all pads in alphabetical order as array.
    */
-  getPads: function(cb){
+  getPads: thenify(function(cb){
     this.load(function() {
       if(!padList.sorted){
         padList.list = padList.list.sort();
@@ -84,7 +85,7 @@ var padList = {
       }
       cb && cb(padList.list);
     })
-  },
+  }),
   addPad: function(name)
   {
     if(!this.initiated) return;
@@ -119,7 +120,7 @@ var padIdTransforms = [
  * @param id A String with the id of the pad
  * @param {Function} callback 
  */
-exports.getPad = function(id, text, callback)
+exports.getPad = thenify(function(id, text, callback)
 {    
   //check if this is a valid padId
   if(!exports.isValidPadId(id))
@@ -173,17 +174,17 @@ exports.getPad = function(id, text, callback)
     padList.addPad(id);
     callback(null, pad);
   });
-}
+});
 
-exports.listAllPads = function(cb)
+exports.listAllPads = thenify(function(cb)
 {
   padList.getPads(function(list) {
     cb && cb(null, {padIDs: list});
   });
-}
+});
 
 //checks if a pad exists
-exports.doesPadExists = function(padId, callback)
+exports.doesPadExists = thenify(function(padId, callback)
 {
   db.get("pad:"+padId, function(err, value)
   {
@@ -196,10 +197,10 @@ exports.doesPadExists = function(padId, callback)
       callback(null, false); 
     }
   });
-}
+});
 
 //returns a sanitized padId, respecting legacy pad id formats
-exports.sanitizePadId = function(padId, callback) {
+exports.sanitizePadId = thenify(function(padId, callback) {
   var transform_index = arguments[2] || 0;
   //we're out of possible transformations, so just return it
   if(transform_index >= padIdTransforms.length)
@@ -227,7 +228,7 @@ exports.sanitizePadId = function(padId, callback) {
     //check the next transform
     exports.sanitizePadId(transformedPadId, callback, transform_index);
   });
-}
+});
 
 exports.isValidPadId = function(padId)
 {

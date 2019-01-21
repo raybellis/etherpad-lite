@@ -47,8 +47,8 @@ stats.gauge('memoryUsage', function() {
  * to fail completely on early versions of NodeJS
  */
 var npm = require("npm/lib/npm.js");
-var promisify = require('util').promisify;
-var npm_load = promisify(npm.load);
+var thenify = require("thenify");
+var npm_load = thenify(npm.load);
 
 npm_load({}).then(function() {
 
