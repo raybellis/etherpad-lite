@@ -78,7 +78,7 @@ exports.callAll = function (hook_name, args) {
   }
 }
 
-function aCallAll (hook_name, args, cb) {
+function aCallAll(hook_name, args, cb) {
   if (!args) args = {};
   if (!cb) cb = function () {};
   if (exports.plugins.hooks[hook_name] === undefined) return cb(null, []);
@@ -101,7 +101,7 @@ exports.aCallAll = function (hook_name, args, cb) {
   } else if (typeof cb === "function") {
     return aCallAll(hook_name, args, cb);
   } else {
-    throw TypeError("hooks.aCallAll callback parameter");
+    throw new TypeError("hooks.aCallAll callback parameter");
   }
 }
 
@@ -113,7 +113,7 @@ exports.callFirst = function (hook_name, args) {
   });
 }
 
-exports.aCallFirst = function (hook_name, args, cb) {
+function aCallFirst(hook_name, args, cb) {
   if (!args) args = {};
   if (!cb) cb = function () {};
   if (exports.plugins.hooks[hook_name] === undefined) return cb(null, []);
@@ -124,6 +124,18 @@ exports.aCallFirst = function (hook_name, args, cb) {
     },
     cb
   );
+}
+
+/* return a Promise if cb is not supplied */
+exports.aCallFirst = function (hook_name, args, cb) {
+  if (cb === undefined) {
+    return new Promise((resolve, reject) =>
+      aCallFirst(hook_name, args, (err, res) => err ? reject(err) : resolve(res)));
+  } else if (typeof cb === "function") {
+    return aCallFirst(hook_name, args, cb);
+  } else {
+    throw new TypeError("hooks.aCallFirst callback parameter");
+  }
 }
 
 exports.callAllStr = function(hook_name, args, sep, pre, post) {
