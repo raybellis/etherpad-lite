@@ -517,7 +517,7 @@ exports.version = version;
  * @req express request object
  * @res express response object
  */
-exports.handle = function(apiVersion, functionName, fields, req, res)
+exports.handle = async function(apiVersion, functionName, fields, req, res)
 {
   //check if this is a valid apiversion
   var isKnownApiVersion = false;
@@ -566,61 +566,43 @@ exports.handle = function(apiVersion, functionName, fields, req, res)
     return;
   }
 
-  //sanitize any pad id's before continuing
-  if(fields["padID"])
-  {
-    padManager.sanitizePadId(fields["padID"], function(padId)
-    {
-      fields["padID"] = padId;
-      callAPI(apiVersion, functionName, fields, req, res);
-    });
-  }
-  else if(fields["padName"])
-  {
-    padManager.sanitizePadId(fields["padName"], function(padId)
-    {
-      fields["padName"] = padId;
-      callAPI(apiVersion, functionName, fields, req, res);
-    });
-  }
-  else
-  {
-    callAPI(apiVersion, functionName, fields, req, res);
+  try {
+    //sanitize any pad id's before continuing
+    if (fields["padID"]) {
+       fields["padID"] = await padManager.sanitizePadId(fields["padID"]);
+    } else if (fields["padName"]) {
+       fields["padName"] = await padManager.sanitizePadId(fields["padName"]);
+    }
+    await callAPI(apiVersion, functionName, fields, req, res);
+  } catch (e) {
+    ERR(e);
   }
 }
 
 //calls the api function
-function callAPI(apiVersion, functionName, fields, req, res)
+async function callAPI(apiVersion, functionName, fields, req, res)
 {
   //put the function parameters in an array
   var functionParams = version[apiVersion][functionName].map(function (field) {
     return fields[field]
   })
 
-  //add a callback function to handle the response
-  functionParams.push(function(err, data)
-  {
-    // no error happend, everything is fine
-    if(err == null)
-    {
-      if(!data)
+  try {
+    // call the api function
+    let data = await api[functionName].apply(this, functionParams);
+    if (!data) {
         data = null;
+    }
+    res.send({code: 0, message: "ok", data: data});
+  } catch (err) {
 
-      res.send({code: 0, message: "ok", data: data});
-    }
-    // parameters were wrong and the api stopped execution, pass the error
-    else if(err.name == "apierror")
-    {
+    if(err.name == "apierror") {
+      // parameters were wrong and the api stopped execution, pass the error
       res.send({code: 1, message: err.message, data: null});
-    }
-    //an unkown error happend
-    else
-    {
+    } else {
+      //an unknown error happend
       res.send({code: 2, message: "internal error", data: null});
       ERR(err);
     }
-  });
-
-  //call the api function
-  api[functionName].apply(this, functionParams);
+  }
 }
