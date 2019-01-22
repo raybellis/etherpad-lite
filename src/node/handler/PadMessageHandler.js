@@ -39,6 +39,7 @@ var channels = require("channels");
 var stats = require('../stats');
 var remoteAddress = require("../utils/RemoteAddress").remoteAddress;
 const thenify = require("thenify").withCallback;
+
 /**
  * A associative array that saves informations about a session
  * key = sessionId
@@ -60,7 +61,7 @@ stats.gauge('totalUsers', function() {
 /**
  * A changeset queue per pad that is processed by handleUserChanges()
  */
-var padChannels = new channels.channels(handleUserChanges);
+var padChannels = new channels.channels(thenify(handleUserChanges));
 
 /**
  * Saves the Socket class we need to send and recieve data from the client
@@ -336,7 +337,7 @@ function handleSaveRevisionMessage(client, message){
  * @param msg {Object} the message we're sending
  * @param sessionID {string} the socketIO session to which we're sending this message
  */
-exports.handleCustomObjectMessage = function (msg, sessionID, cb) {
+exports.handleCustomObjectMessage = thenify(function (msg, sessionID, cb) {
   if(msg.data.type === "CUSTOM"){
     if(sessionID){ // If a sessionID is targeted then send directly to this sessionID
       socketio.sockets.socket(sessionID).json.send(msg); // send a targeted message
@@ -345,7 +346,7 @@ exports.handleCustomObjectMessage = function (msg, sessionID, cb) {
     }
   }
   cb(null, {});
-}
+});
 
 
 /**
@@ -354,7 +355,7 @@ exports.handleCustomObjectMessage = function (msg, sessionID, cb) {
  * @param padID {Pad} the pad to which we're sending this message
  * @param msg {String} the message we're sending
  */
-exports.handleCustomMessage = function (padID, msg, cb) {
+exports.handleCustomMessage = thenify(function (padID, msg, cb) {
   var time = new Date().getTime();
   var msg = {
     type: 'COLLABROOM',
@@ -366,7 +367,7 @@ exports.handleCustomMessage = function (padID, msg, cb) {
   socketio.sockets.in(padID).json.send(msg);
 
   cb(null, {});
-}
+});
 
 /**
  * Handles a Chat Message
