@@ -200,7 +200,7 @@ exports.doesPadExists = thenify(function(padId, callback)
 });
 
 //returns a sanitized padId, respecting legacy pad id formats
-function sanitizePadId(function(padId, callback) {
+function sanitizePadId(padId, callback) {
   var transform_index = arguments[2] || 0;
   //we're out of possible transformations, so just return it
   if(transform_index >= padIdTransforms.length)
@@ -226,9 +226,9 @@ function sanitizePadId(function(padId, callback) {
       transform_index += 1;
     }
     //check the next transform
-    exports.sanitizePadId(transformedPadId, callback, transform_index);
+    sanitizePadId(transformedPadId, callback, transform_index);
   });
-});
+}
 
 exports.sanitizePadId = function(padId, callback) {
   if (callback) {
