@@ -450,21 +450,17 @@ Pad.prototype.init = thenify(function init(text, callback) {
   });
 });
 
-// @TODO: needs work because second parameter is optional
-Pad.prototype.copy = function copy(destinationID, force, callback) {
+Pad.prototype.copy = thenify(function copy(destinationID, force, callback) {
   var sourceID = this.id;
   var _this = this;
   var destGroupID;
 
-  // make force optional
-  if (typeof force == "function") {
-    callback = force;
-    force = false;
+  // allow force to be a string
+  if (typeof force === "string") {
+    force = (force.toLowerCase() === "true");
+  } else {
+    force = !!force;
   }
-  else if (force == undefined || force.toLowerCase() != "true") {
-    force = false;
-  }
-  else force = true;
 
   // Kick everyone from this pad.
   // This was commented due to https://github.com/ether/etherpad-lite/issues/3183.
@@ -608,7 +604,7 @@ Pad.prototype.copy = function copy(destinationID, force, callback) {
     if(ERR(err, callback)) return;
     callback(null, {padID: destinationID});
   });
-};
+});
 
 Pad.prototype.remove = thenify(function remove(callback) {
   var padID = this.id;
