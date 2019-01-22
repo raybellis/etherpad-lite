@@ -200,7 +200,7 @@ exports.doesPadExists = thenify(function(padId, callback)
 });
 
 //returns a sanitized padId, respecting legacy pad id formats
-exports.sanitizePadId = thenify(function(padId, callback) {
+function sanitizePadId(function(padId, callback) {
   var transform_index = arguments[2] || 0;
   //we're out of possible transformations, so just return it
   if(transform_index >= padIdTransforms.length)
@@ -229,6 +229,14 @@ exports.sanitizePadId = thenify(function(padId, callback) {
     exports.sanitizePadId(transformedPadId, callback, transform_index);
   });
 });
+
+exports.sanitizePadId = function(padId, callback) {
+  if (callback) {
+    return sanitizePadId(padId, callback);
+  } else {
+    return new Promise(resolve => sanitizePadId(padId, resolve));
+  }
+}
 
 exports.isValidPadId = function(padId)
 {
