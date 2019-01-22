@@ -112,7 +112,20 @@ exports.getAttributePool = thenify(function (padID, callback)
   });
 });
 
-const getRevisionChangeset = thenify(function (padID, rev, callback)
+/**
+getRevisionChangeset (padID, [rev])
+
+get the changeset at a given revision, or last revision if 'rev' is not defined.
+
+Example returns:
+{
+    "code" : 0,
+    "message" : "ok",
+    "data" : "Z:1>6b|5+6b$Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http://etherpad.org\n"
+});
+
+*/
+exports.getRevisionChangeset = thenify(function (padID, rev, callback)
 {
   // check if rev is a number
   if (rev !== undefined && typeof rev !== "number")
@@ -177,32 +190,16 @@ const getRevisionChangeset = thenify(function (padID, rev, callback)
   });
 });
 
-/**
-getRevisionChangeset (padID, [rev])
 
-get the changeset at a given revision, or last revision if 'rev' is not defined.
+/**
+getText(padID, [rev]) returns the text of a pad
 
 Example returns:
-{
-    "code" : 0,
-    "message" : "ok",
-    "data" : "Z:1>6b|5+6b$Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http://etherpad.org\n"
-});
 
+{code: 0, message:"ok", data: {text:"Welcome Text"}}
+{code: 1, message:"padID does not exist", data: null}
 */
-exports.getRevisionChangeset = function(padID, rev, callback)
-{
-  // check if rev is set
-  if (typeof rev === "function")
-  {
-    callback = rev;
-    rev = undefined;
-  }
-
-  return getRevisionChangeset(padID, rev, callback);
-}
-
-const getText = thenify(function (padID, rev, callback)
+exports.getText = thenify(function (padID, rev, callback)
 {
   //check if rev is a number
   if(rev !== undefined && typeof rev != "number")
@@ -266,26 +263,6 @@ const getText = thenify(function (padID, rev, callback)
 });
 
 /**
-getText(padID, [rev]) returns the text of a pad
-
-Example returns:
-
-{code: 0, message:"ok", data: {text:"Welcome Text"}}
-{code: 1, message:"padID does not exist", data: null}
-*/
-exports.getText = function(padID, rev, callback)
-{
-  //check if rev is set
-  if(typeof rev == "function")
-  {
-    callback = rev;
-    rev = undefined;
-  }
-
-  return getText(padID, rev, callback);
-}
-
-/**
 setText(padID, text) sets the text of a pad
 
 Example returns:
@@ -346,7 +323,15 @@ exports.appendText = thenify(function(padID, text, callback)
   });
 });
 
-const getHTML = thenify(function (padID, rev, callback)
+/**
+getHTML(padID, [rev]) returns the html of a pad 
+
+Example returns:
+
+{code: 0, message:"ok", data: {text:"Welcome <strong>Text</strong>"}}
+{code: 1, message:"padID does not exist", data: null}
+*/
+exports.getHTML = thenify(function (padID, rev, callback)
 {
   if (rev !== undefined && typeof rev != "number")
   {
@@ -411,25 +396,6 @@ const getHTML = thenify(function (padID, rev, callback)
 });
 
 /**
-getHTML(padID, [rev]) returns the html of a pad 
-
-Example returns:
-
-{code: 0, message:"ok", data: {text:"Welcome <strong>Text</strong>"}}
-{code: 1, message:"padID does not exist", data: null}
-*/
-exports.getHTML = function(padID, rev, callback)
-{
-  if(typeof rev == "function")
-  {
-    callback = rev;
-    rev = undefined;
-  }
-
-  return getHTML(padID, rev, callback);
-}
-
-/**
 setHTML(padID, html) sets the text of a pad based on HTML
 
 Example returns:
@@ -450,7 +416,6 @@ exports.setHTML = thenify(function(padID, html, callback)
   getPadSafe(padID, true, function(err, pad)
   {
     if(ERR(err, callback)) return;
-
     // add a new changeset with the new html to the pad
     importHtml.setPadHTML(pad, cleanText(html), function(e){
       if(e){
@@ -627,7 +592,15 @@ exports.listSavedRevisions = thenify(function(padID, callback)
   });
 });
 
-const saveRevision = thenify(function(padID, rev, callback) {
+/**
+saveRevision(padID) returns the list of saved revisions of this pad
+
+Example returns:
+
+{code: 0, message:"ok", data: null}
+{code: 1, message:"padID does not exist", data: null}
+*/
+exports.saveRevision = thenify(function(padID, rev, callback) {
   //check if rev is a number
   if(rev !== undefined && typeof rev != "number")
   {
@@ -644,7 +617,7 @@ const saveRevision = thenify(function(padID, rev, callback) {
   //ensure this is not a negativ number
   if(rev !== undefined && rev < 0)
   {
-    callback(new customError("rev is a negativ number","apierror"));
+    callback(new customError("rev is a negative number","apierror"));
     return;
   }
 
@@ -681,26 +654,6 @@ const saveRevision = thenify(function(padID, rev, callback) {
     });
   });
 });
-
-/**
-saveRevision(padID) returns the list of saved revisions of this pad
-
-Example returns:
-
-{code: 0, message:"ok", data: null}
-{code: 1, message:"padID does not exist", data: null}
-*/
-exports.saveRevision = function(padID, rev, callback)
-{
-  //check if rev is set
-  if(typeof rev == "function")
-  {
-    callback = rev;
-    rev = undefined;
-  }
-
-  return saveRevision(padID, rev, callback);
-}
 
 /**
 getLastEdited(padID) returns the timestamp of the last revision of the pad
