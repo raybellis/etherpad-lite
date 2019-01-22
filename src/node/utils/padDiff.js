@@ -1,6 +1,7 @@
 var Changeset = require("../../static/js/Changeset");
 var async = require("async");
 var exportHtml = require('./ExportHtml');
+const thenify = require("thenify").withCallback;
  
 function PadDiff (pad, fromRev, toRev){      
   //check parameters
@@ -70,7 +71,7 @@ PadDiff.prototype._isClearAuthorship = function(changeset){
   return true;
 };
  
-PadDiff.prototype._createClearAuthorship = function(rev, callback){
+PadDiff.prototype._createClearAuthorship = thenify(function(rev, callback){
   var self = this;
   this._pad.getInternalRevisionAText(rev, function(err, atext){
    if(err){
@@ -84,9 +85,9 @@ PadDiff.prototype._createClearAuthorship = function(rev, callback){
    
    callback(null, changeset);
   });
-};
+});
  
-PadDiff.prototype._createClearStartAtext = function(rev, callback){
+PadDiff.prototype._createClearStartAtext = thenify(function(rev, callback){
   var self = this;
   
   //get the atext of this revision
@@ -111,9 +112,9 @@ PadDiff.prototype._createClearStartAtext = function(rev, callback){
      callback(null, newAText);
    });
   });
-};
+});
  
-PadDiff.prototype._getChangesetsInBulk = function(startRev, count, callback) {
+PadDiff.prototype._getChangesetsInBulk = thenify(function(startRev, count, callback) {
   var self = this;
   
   //find out which revisions we need
@@ -141,7 +142,7 @@ PadDiff.prototype._getChangesetsInBulk = function(startRev, count, callback) {
   }, function(err){
     callback(err, changesets, authors);
   });
-};
+});
  
 PadDiff.prototype._addAuthors = function(authors) {
   var self = this;
@@ -153,7 +154,7 @@ PadDiff.prototype._addAuthors = function(authors) {
   });
 };
  
-PadDiff.prototype._createDiffAtext = function(callback) {
+PadDiff.prototype._createDiffAtext = thenify(function(callback) {
   var self = this;
   var bulkSize = 100;
   
@@ -227,9 +228,9 @@ PadDiff.prototype._createDiffAtext = function(callback) {
       }
     );
   });
-};
+});
  
-PadDiff.prototype.getHtml = function(callback){
+PadDiff.prototype.getHtml = thenify(function(callback){
   //cache the html
   if(this._html != null){
     return callback(null, this._html);
@@ -270,9 +271,9 @@ PadDiff.prototype.getHtml = function(callback){
   ], function(err){
     callback(err, html);
   });
-};
+});
  
-PadDiff.prototype.getAuthors = function(callback){
+PadDiff.prototype.getAuthors = thenify(function(callback){
   var self = this;
   
   //check if html was already produced, if not produce it, this generates the author array at the same time
@@ -287,7 +288,7 @@ PadDiff.prototype.getAuthors = function(callback){
   } else {
     callback(null, self._authors);
   }
-};
+});
  
 PadDiff.prototype._extendChangesetWithAuthor = function(changeset, author, apool) {  
   //unpack

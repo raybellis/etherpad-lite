@@ -23,6 +23,7 @@ var Changeset = require("ep_etherpad-lite/static/js/Changeset");
 var padManager = require("../db/PadManager");
 var ERR = require("async-stacktrace");
 var _analyzeLine = require('./ExportHelper')._analyzeLine;
+const thenify = require("thenify").withCallback;
 
 // This is slightly different than the HTML method as it passes the output to getTXTFromAText
 function getPadTXT(pad, revNum, callback)
@@ -68,7 +69,7 @@ function getPadTXT(pad, revNum, callback)
   });
 }
 
-exports.getPadTXT = getPadTXT;
+exports.getPadTXT = thenify(getPadTXT);
 
 
 // This is different than the functionality provided in ExportHtml as it provides formatting
@@ -271,7 +272,7 @@ function getTXTFromAtext(pad, atext, authorColors)
 }
 exports.getTXTFromAtext = getTXTFromAtext;
 
-exports.getPadTXTDocument = function (padId, revNum, callback)
+exports.getPadTXTDocument = thenify(function (padId, revNum, callback)
 {
   padManager.getPad(padId, function (err, pad)
   {
@@ -283,4 +284,4 @@ exports.getPadTXTDocument = function (padId, revNum, callback)
       callback(null, html);
     });
   });
-};
+});
