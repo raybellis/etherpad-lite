@@ -28,6 +28,7 @@ var sessionManager = require("./SessionManager");
 var settings = require("../utils/Settings");
 var log4js = require('log4js');
 var authLogger = log4js.getLogger("auth");
+const thenify = require("thenify").withCallback;
 
 /**
  * This function controlls the access to a pad, it checks if the user can access a pad.
@@ -37,7 +38,7 @@ var authLogger = log4js.getLogger("auth");
  * @param password the password the user has given to access this pad, can be null 
  * @param callback will be called with (err, {accessStatus: grant|deny|wrongPassword|needPassword, authorID: a.xxxxxx})
  */ 
-exports.checkAccess = function (padID, sessionCookie, token, password, callback)
+exports.checkAccess = thenify(function (padID, sessionCookie, token, password, callback)
 { 
   var statusObject;
   
@@ -326,4 +327,4 @@ exports.checkAccess = function (padID, sessionCookie, token, password, callback)
     if(ERR(err, callback)) return;
     callback(null, statusObject);
   });
-};
+});
