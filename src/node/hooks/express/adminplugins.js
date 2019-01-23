@@ -69,23 +69,24 @@ exports.socketio = function (hook_name, args, cb) {
       });
     });
 
-    socket.on("search", function (query) {
-      installer.search(query.searchTerm, /*maxCacheAge:*/60*10, function (er, results) {
-        if(er) {
-          console.error(er)
-          results = {}
-        }
-        var res = Object.keys(results)
-          .map(function(pluginName) {
-            return results[pluginName]
-          })
-          .filter(function(plugin) {
-            return !plugins.plugins[plugin.name]
-          });
-        res = sortPluginList(res, query.sortBy, query.sortDir)
-          .slice(query.offset, query.offset+query.limit);
-        socket.emit("results:search", {results: res, query: query});
-      });
+    socket.on("search", async function (query) {
+      var results;
+      try {
+        results = await installer.search(query.searchTerm, /*maxCacheAge:*/ 60 * 10);
+      } catch (er) {
+        console.error(er)
+        results = {};
+      }
+      var res = Object.keys(results)
+        .map(function(pluginName) {
+          return results[pluginName]
+        })
+        .filter(function(plugin) {
+          return !plugins.plugins[plugin.name]
+        });
+      res = sortPluginList(res, query.sortBy, query.sortDir)
+        .slice(query.offset, query.offset+query.limit);
+      socket.emit("results:search", {results: res, query: query});
     });
 
     socket.on("install", function (plugin_name) {
