@@ -8,13 +8,12 @@ var Store = require('ep_etherpad-lite/node_modules/express-session').Store,
   db = require('ep_etherpad-lite/node/db/DB').db,
   log4js = require('ep_etherpad-lite/node_modules/log4js'),
   messageLogger = log4js.getLogger("SessionStore");
-const thenify = require("thenify").withCallback;
 
 var SessionStore = module.exports = function SessionStore() {};
 
 SessionStore.prototype.__proto__ = Store.prototype;
 
-SessionStore.prototype.get = thenify(function(sid, fn){
+SessionStore.prototype.get = function(sid, fn){
   messageLogger.debug('GET ' + sid);
   var self = this;
   db.get("sessionstorage:" + sid, function (err, sess)
@@ -30,52 +29,60 @@ SessionStore.prototype.get = thenify(function(sid, fn){
       fn();
     }
   });
-});
+}
 
-SessionStore.prototype.set = thenify(function(sid, sess, fn){
+SessionStore.prototype.set = function(sid, sess, fn){
   messageLogger.debug('SET ' + sid);
   db.set("sessionstorage:" + sid, sess);
-  process.nextTick(function(){
-    if(fn) fn();
-  });
-});
+  if (fn) {
+    process.nextTick(fn);
+  }
+}
 
-SessionStore.prototype.destroy = thenify(function(sid, fn){
+SessionStore.prototype.destroy = function(sid, fn){
   messageLogger.debug('DESTROY ' + sid);
   db.remove("sessionstorage:" + sid);
-  process.nextTick(function(){
+  if (fn) {
+    process.nextTick(fn);
+  }
+}
+
+/*
+ * the following methods are optional requirements for a compatible
+ * session store for express-session, but in any case appear to
+ * depend on a non-existent feature of ueberdb2
+ */
+if (db.forEach) {
+
+  SessionStore.prototype.all = function(fn){
+    messageLogger.debug('ALL');
+    var sessions = [];
+    db.forEach(function(key, value){
+      if (key.substr(0,15) === "sessionstorage:") {
+        sessions.push(value);
+      }
+    });
+    fn(null, sessions);
+  }
+
+  SessionStore.prototype.clear = function(fn){
+    messageLogger.debug('CLEAR');
+    db.forEach(function(key, value){
+      if (key.substr(0,15) === "sessionstorage:") {
+        db.db.remove("session:" + key);
+      }
+    });
     if(fn) fn();
-  });
-});
+  }
 
-SessionStore.prototype.all = thenify(function(fn){
-  messageLogger.debug('ALL');
-  var sessions = [];
-  db.forEach(function(key, value){
-    if (key.substr(0,15) === "sessionstorage:") {
-      sessions.push(value);
-    }
-  });
-  fn(null, sessions);
-});
-
-SessionStore.prototype.clear = thenify(function(fn){
-  messageLogger.debug('CLEAR');
-  db.forEach(function(key, value){
-    if (key.substr(0,15) === "sessionstorage:") {
-      db.db.remove("session:" + key);
-    }
-  });
-  if(fn) fn();
-});
-
-SessionStore.prototype.length = thenify(function(fn){
-  messageLogger.debug('LENGTH');
-  var i = 0;
-  db.forEach(function(key, value){
-    if (key.substr(0,15) === "sessionstorage:") {
-      i++;
-    }
-  });
-  fn(null, i);
-});
+  SessionStore.prototype.length = function(fn){
+    messageLogger.debug('LENGTH');
+    var i = 0;
+    db.forEach(function(key, value){
+      if (key.substr(0,15) === "sessionstorage:") {
+        i++;
+      }
+    });
+    fn(null, i);
+  }
+}
