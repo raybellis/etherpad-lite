@@ -96,12 +96,13 @@ function aCallAll(hook_name, args, cb) {
 /* return a Promise if cb is not supplied */
 exports.aCallAll = function (hook_name, args, cb) {
   if (cb === undefined) {
-    return new Promise((resolve, reject) =>
-      aCallAll(hook_name, args, (err, res) => err ? reject(err) : resolve(res)));
-  } else if (typeof cb === "function") {
-    return aCallAll(hook_name, args, cb);
+    return new Promise(function(resolve, reject) {
+      aCallAll(hook_name, args, function(err, res) {
+	return err ? reject(err) : resolve(res);
+      });
+    });
   } else {
-    throw new TypeError("hooks.aCallAll callback parameter");
+    return aCallAll(hook_name, args, cb);
   }
 }
 
@@ -129,12 +130,13 @@ function aCallFirst(hook_name, args, cb) {
 /* return a Promise if cb is not supplied */
 exports.aCallFirst = function (hook_name, args, cb) {
   if (cb === undefined) {
-    return new Promise((resolve, reject) =>
-      aCallFirst(hook_name, args, (err, res) => err ? reject(err) : resolve(res)));
-  } else if (typeof cb === "function") {
-    return aCallFirst(hook_name, args, cb);
+    return new Promise(function(resolve, reject) {
+      aCallFirst(hook_name, args, function(err, res) {
+	return err ? reject(err) : resolve(res);
+      });
+    });
   } else {
-    throw new TypeError("hooks.aCallFirst callback parameter");
+    return aCallFirst(hook_name, args, cb);
   }
 }
 

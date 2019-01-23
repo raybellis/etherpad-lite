@@ -37,8 +37,8 @@ exports.uninstall = function(plugin_name, cb) {
       if (er) return cb && cb(er);
       hooks.aCallAll("pluginUninstall", {plugin_name: plugin_name})
         .then(plugins.update)
-        .then(() => cb(null))
-        .catch((er) => cb(er));
+        .then(function() { cb(null) })
+        .catch(function(er) { cb(er) });
     });
   });
 };
@@ -51,8 +51,8 @@ exports.install = function(plugin_name, cb) {
       if (er) return cb && cb(er);
       hooks.aCallAll("pluginInstall", {plugin_name: plugin_name})
         .then(plugins.update)
-        .then(() => cb(null))
-        .catch((er) => cb(er));
+        .then(function() { cb(null) })
+        .catch(function(er) { cb(er) });
     });
   });
 };
