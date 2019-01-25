@@ -20,29 +20,34 @@
 
 
 var ERR = require("async-stacktrace");
-var db = require("./DB").db;
+var db = require("./DB");
 var customError = require("../utils/customError");
 var randomString = require('ep_etherpad-lite/static/js/pad_utils').randomString;
 const thenify = require("thenify").withCallback;
 
-exports.getColorPalette = function(){
-  return ["#ffc7c7", "#fff1c7", "#e3ffc7", "#c7ffd5", "#c7ffff", "#c7d5ff", "#e3c7ff", "#ffc7f1", "#ffa8a8", "#ffe699", "#cfff9e", "#99ffb3", "#a3ffff", "#99b3ff", "#cc99ff", "#ff99e5", "#e7b1b1", "#e9dcAf", "#cde9af", "#bfedcc", "#b1e7e7", "#c3cdee", "#d2b8ea", "#eec3e6", "#e9cece", "#e7e0ca", "#d3e5c7", "#bce1c5", "#c1e2e2", "#c1c9e2", "#cfc1e2", "#e0bdd9", "#baded3", "#a0f8eb", "#b1e7e0", "#c3c8e4", "#cec5e2", "#b1d5e7", "#cda8f0", "#f0f0a8", "#f2f2a6", "#f5a8eb", "#c5f9a9", "#ececbb", "#e7c4bc", "#daf0b2", "#b0a0fd", "#bce2e7", "#cce2bb", "#ec9afe", "#edabbd", "#aeaeea", "#c4e7b1", "#d722bb", "#f3a5e7", "#ffa8a8", "#d8c0c5", "#eaaedd", "#adc6eb", "#bedad1", "#dee9af", "#e9afc2", "#f8d2a0", "#b3b3e6"];
+exports.getColorPalette = function () {
+  return [
+    "#ffc7c7", "#fff1c7", "#e3ffc7", "#c7ffd5", "#c7ffff", "#c7d5ff", "#e3c7ff", "#ffc7f1",
+    "#ffa8a8", "#ffe699", "#cfff9e", "#99ffb3", "#a3ffff", "#99b3ff", "#cc99ff", "#ff99e5",
+    "#e7b1b1", "#e9dcAf", "#cde9af", "#bfedcc", "#b1e7e7", "#c3cdee", "#d2b8ea", "#eec3e6",
+    "#e9cece", "#e7e0ca", "#d3e5c7", "#bce1c5", "#c1e2e2", "#c1c9e2", "#cfc1e2", "#e0bdd9",
+    "#baded3", "#a0f8eb", "#b1e7e0", "#c3c8e4", "#cec5e2", "#b1d5e7", "#cda8f0", "#f0f0a8",
+    "#f2f2a6", "#f5a8eb", "#c5f9a9", "#ececbb", "#e7c4bc", "#daf0b2", "#b0a0fd", "#bce2e7",
+    "#cce2bb", "#ec9afe", "#edabbd", "#aeaeea", "#c4e7b1", "#d722bb", "#f3a5e7", "#ffa8a8",
+    "#d8c0c5", "#eaaedd", "#adc6eb", "#bedad1", "#dee9af", "#e9afc2", "#f8d2a0", "#b3b3e6"
+  ];
 };
 
 /**
  * Checks if the author exists
  */
-exports.doesAuthorExist = thenify(function (authorID, callback)
+exports.doesAuthorExist = async function (authorID)
 {
-  //check if the database entry of this author exists
-  db.get("globalAuthor:" + authorID, function (err, author)
-  {
-    if(ERR(err, callback)) return;
-    callback(null, author != null);
-  });
-});
+  let author = await db.get("globalAuthor:" + authorID);
+  return author !== null;
+}
 
-/* exported for backwards compatibility *./
+/* exported for backwards compatibility */
 exports.doesAuthorExists = exports.doesAuthorExist;
 
 /**
@@ -64,22 +69,18 @@ exports.getAuthor4Token = thenify(function (token, callback)
  * Returns the AuthorID for a mapper.
  * @param {String} token The mapper
  * @param {String} name The name of the author (optional)
- * @param {Function} callback callback (err, author)
  */
-exports.createAuthorIfNotExistsFor = thenify(function (authorMapper, name, callback)
+exports.createAuthorIfNotExistsFor = async function (authorMapper, name)
 {
-  mapAuthorWithDBKey("mapper2author", authorMapper, function(err, author)
-  {
-    if(ERR(err, callback)) return;
+  let author = await mapAuthorWithDBKey("mapper2author", authorMapper);
 
-    //set the name of this author
-    if(name)
-      exports.setAuthorName(author.authorID, name);
+  // set the name of this author
+  if (name) {
+    await exports.setAuthorName(author.authorID, name);
+  }
 
-    //return the authorID
-    callback(null, author);
-  });
-});
+  return author;
+};
 
 /**
  * Returns the AuthorID for a mapper. We can map using a mapperkey,
@@ -88,10 +89,10 @@ exports.createAuthorIfNotExistsFor = thenify(function (authorMapper, name, callb
  * @param {String} mapper The mapper
  * @param {Function} callback callback (err, author)
  */
-function mapAuthorWithDBKey (mapperkey, mapper, callback)
+let mapAuthorWithDBKey = thenify(function mapAuthorWithDBKey (mapperkey, mapper, callback)
 {
   //try to map to an author
-  db.get(mapperkey + ":" + mapper, function (err, author)
+  db.db.get(mapperkey + ":" + mapper, function (err, author)
   {
     if(ERR(err, callback)) return;
 
@@ -103,7 +104,7 @@ function mapAuthorWithDBKey (mapperkey, mapper, callback)
         if(ERR(err, callback)) return;
 
         //create the token2author relation
-        db.set(mapperkey + ":" + mapper, author.authorID);
+        db.db.set(mapperkey + ":" + mapper, author.authorID);
 
         //return the author
         callback(null, author);
@@ -114,12 +115,12 @@ function mapAuthorWithDBKey (mapperkey, mapper, callback)
 
     //there is a author with this mapper
     //update the timestamp of this author
-    db.setSub("globalAuthor:" + author, ["timestamp"], new Date().getTime());
+    db.db.setSub("globalAuthor:" + author, ["timestamp"], new Date().getTime());
 
     //return the author
     callback(null, {authorID: author});
   });
-}
+});
 
 /**
  * Internal function that creates the database entry for an author
@@ -134,7 +135,7 @@ exports.createAuthor = thenify(function(name, callback)
   var authorObj = {"colorId" : Math.floor(Math.random()*(exports.getColorPalette().length)), "name": name, "timestamp": new Date().getTime()};
 
   //set the global author db entry
-  db.set("globalAuthor:" + author, authorObj);
+  db.db.set("globalAuthor:" + author, authorObj);
 
   callback(null, {authorID: author});
 });
@@ -146,7 +147,7 @@ exports.createAuthor = thenify(function(name, callback)
  */
 exports.getAuthor = thenify(function (author, callback)
 {
-  db.get("globalAuthor:" + author, callback);
+  db.db.get("globalAuthor:" + author, callback);
 });
 
 
@@ -158,7 +159,7 @@ exports.getAuthor = thenify(function (author, callback)
  */
 exports.getAuthorColorId = thenify(function (author, callback)
 {
-  db.getSub("globalAuthor:" + author, ["colorId"], callback);
+  db.db.getSub("globalAuthor:" + author, ["colorId"], callback);
 });
 
 /**
@@ -169,7 +170,7 @@ exports.getAuthorColorId = thenify(function (author, callback)
  */
 exports.setAuthorColorId = thenify(function (author, colorId, callback)
 {
-  db.setSub("globalAuthor:" + author, ["colorId"], colorId, callback);
+  db.db.setSub("globalAuthor:" + author, ["colorId"], colorId, callback);
 });
 
 /**
@@ -179,7 +180,7 @@ exports.setAuthorColorId = thenify(function (author, colorId, callback)
  */
 exports.getAuthorName = thenify(function (author, callback)
 {
-  db.getSub("globalAuthor:" + author, ["name"], callback);
+  db.db.getSub("globalAuthor:" + author, ["name"], callback);
 });
 
 /**
@@ -190,70 +191,52 @@ exports.getAuthorName = thenify(function (author, callback)
  */
 exports.setAuthorName = thenify(function (author, name, callback)
 {
-  db.setSub("globalAuthor:" + author, ["name"], name, callback);
+  db.db.setSub("globalAuthor:" + author, ["name"], name, callback);
 });
 
 /**
  * Returns an array of all pads this author contributed to
  * @param {String} author The id of the author
- * @param {Function} callback (optional)
  */
-exports.listPadsOfAuthor = thenify(function (authorID, callback)
+exports.listPadsOfAuthor = async function (authorID)
 {
   /* There are two other places where this array is manipulated:
    * (1) When the author is added to a pad, the author object is also updated
    * (2) When a pad is deleted, each author of that pad is also updated
    */
-  //get the globalAuthor
-  db.get("globalAuthor:" + authorID, function(err, author)
-  {
-    if(ERR(err, callback)) return;
 
-    //author does not exists
-    if(author == null)
-    {
-      callback(new customError("authorID does not exist","apierror"))
-      return;
-    }
+  // get the globalAuthor
+  let author = await db.get("globalAuthor:" + authorID);
+  if (author === null) {
+    throw new customError("authorID does not exist", "apierror");
+  }
 
-    //everything is fine, return the pad IDs
-    var pads = [];
-    if(author.padIDs != null)
-    {
-      for (var padId in author.padIDs)
-      {
-        pads.push(padId);
-      }
-    }
-    callback(null, {padIDs: pads});
-  });
-});
+  // everything is fine, return the pad IDs
+  let padIDs = Object.keys(author.padIDs || {});
+  return { padIDs };
+}
 
 /**
  * Adds a new pad to the list of contributions
  * @param {String} author The id of the author
  * @param {String} padID The id of the pad the author contributes to
  */
-exports.addPad = function (authorID, padID)
+exports.addPad = async function (authorID, padID)
 {
-  //get the entry
-  db.get("globalAuthor:" + authorID, function(err, author)
-  {
-    if(ERR(err)) return;
-    if(author == null) return;
+  // get the entry
+  let author = await db.get("globalAuthor:" + authorID);
+  if (author === null) return;
 
-    //the entry doesn't exist so far, let's create it
-    if(author.padIDs == null)
-    {
-      author.padIDs = {};
-    }
+  // the entry doesn't exist so far, let's create it
+  if (author.padIDs === null) {
+    author.padIDs = {};
+  }
 
-    //add the entry for this pad
-    author.padIDs[padID] = 1;// anything, because value is not used
+  // add the entry for this pad
+  author.padIDs[padID] = 1; // anything, because value is not used
 
-    //save the new element back
-    db.set("globalAuthor:" + authorID, author);
-  });
+  // save the new element back
+  db.set("globalAuthor:" + authorID, author);
 }
 
 /**
@@ -261,18 +244,14 @@ exports.addPad = function (authorID, padID)
  * @param {String} author The id of the author
  * @param {String} padID The id of the pad the author contributes to
  */
-exports.removePad = function (authorID, padID)
+exports.removePad = async function (authorID, padID)
 {
-  db.get("globalAuthor:" + authorID, function (err, author)
-  {
-    if(ERR(err)) return;
-    if(author == null) return;
+  let author = await db.get("globalAuthor:" + authorID);
+  if (author === null) return;
 
-    if(author.padIDs != null)
-    {
-      //remove pad from author
-      delete author.padIDs[padID];
-      db.set("globalAuthor:" + authorID, author);
-    }
-  });
+  if (author.padIDs !== null) {
+    // remove pad from author
+    delete author.padIDs[padID];
+    db.set("globalAuthor:" + authorID, author);
+  }
 }
