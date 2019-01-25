@@ -228,7 +228,7 @@ exports.addPad = async function (authorID, padID)
   if (author === null) return;
 
   // the entry doesn't exist so far, let's create it
-  if (author.padIDs === null) {
+  if (!author.padIDs) {
     author.padIDs = {};
   }
 
