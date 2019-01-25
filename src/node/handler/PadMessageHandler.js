@@ -337,17 +337,16 @@ function handleSaveRevisionMessage(client, message){
  * @param msg {Object} the message we're sending
  * @param sessionID {string} the socketIO session to which we're sending this message
  */
-exports.handleCustomObjectMessage = thenify(function (msg, sessionID, cb) {
-  if(msg.data.type === "CUSTOM"){
-    if(sessionID){ // If a sessionID is targeted then send directly to this sessionID
+exports.handleCustomObjectMessage = async function (msg, sessionID) {
+  if (msg.data.type === "CUSTOM") {
+    if (sessionID){ // If a sessionID is targeted then send directly to this sessionID
       socketio.sockets.socket(sessionID).json.send(msg); // send a targeted message
-    }else{
+    } else {
       socketio.sockets.in(msg.data.payload.padId).json.send(msg); // broadcast to all clients on this pad
     }
   }
-  cb(null, {});
-});
-
+  return {};
+}
 
 /**
  * Handles a custom message (sent via HTTP API request)
@@ -819,7 +818,7 @@ function handleUserChanges(data, cb)
   });
 }
 
-exports.updatePadClients = function(pad, callback)
+exports.updatePadClients = thenify(function(pad, callback)
 {
   //skip this step if noone is on this pad
   var roomClients = _getRoomClients(pad.id);
@@ -895,7 +894,7 @@ exports.updatePadClients = function(pad, callback)
       callback
     );
   },callback);
-}
+});
 
 /**
  * Copied from the Etherpad Source Code. Don't know what this method does excatly...
@@ -1515,7 +1514,7 @@ function handleChangesetRequest(client, message)
  * Tries to rebuild the getChangestInfo function of the original Etherpad
  * https://github.com/ether/pad/blob/master/etherpad/src/etherpad/control/pad/pad_changeset_control.js#L144
  */
-function getChangesetInfo(padId, startNum, endNum, granularity, callback)
+let getChangesetInfo = thenify(function getChangesetInfo(padId, startNum, endNum, granularity, callback)
 {
   var forwardsChangesets = [];
   var backwardsChangesets = [];
@@ -1663,13 +1662,13 @@ function getChangesetInfo(padId, startNum, endNum, granularity, callback)
                     start: startNum,
                     granularity: granularity });
   });
-}
+});
 
 /**
  * Tries to rebuild the getPadLines function of the original Etherpad
  * https://github.com/ether/pad/blob/master/etherpad/src/etherpad/control/pad/pad_changeset_control.js#L263
  */
-function getPadLines(padId, revNum, callback)
+let getPadLines = thenify(function getPadLines(padId, revNum, callback)
 {
   var atext;
   var result = {};
@@ -1715,13 +1714,13 @@ function getPadLines(padId, revNum, callback)
     if(ERR(err, callback)) return;
     callback(null, result);
   });
-}
+});
 
 /**
  * Tries to rebuild the composePadChangeset function of the original Etherpad
  * https://github.com/ether/pad/blob/master/etherpad/src/etherpad/control/pad/pad_changeset_control.js#L241
  */
-function composePadChangesets(padId, startNum, endNum, callback)
+let composePadChangesets = thenify(function (padId, startNum, endNum, callback)
 {
   var pad;
   var changesets = {};
@@ -1792,10 +1791,11 @@ function composePadChangesets(padId, startNum, endNum, callback)
     if(ERR(err, callback)) return;
     callback(null, changeset);
   });
-}
+});
 
 function _getRoomClients(padID) {
-  var roomClients = []; var room = socketio.sockets.adapter.rooms[padID];
+  var roomClients = [];
+  var room = socketio.sockets.adapter.rooms[padID];
 
   if (room) {
     for (var id in room.sockets) {
@@ -1809,38 +1809,32 @@ function _getRoomClients(padID) {
 /**
  * Get the number of users in a pad
  */
-exports.padUsersCount = thenify(function (padID, callback) {
-  callback(null, {
+exports.padUsersCount = function (padID) {
+  return {
     padUsersCount: _getRoomClients(padID).length
-  });
-});
+  }
+}
 
 /**
  * Get the list of users in a pad
  */
-exports.padUsers = thenify(function (padID, callback) {
-  var result = [];
+exports.padUsers = async function (padID) {
 
-  var roomClients = _getRoomClients(padID);
+  let padUsers = [];
+  let roomClients = _getRoomClients(padID);
 
-  async.forEach(roomClients, function(roomClient, callback) {
-    var s = sessioninfos[roomClient.id];
-    if(s) {
-      authorManager.getAuthor(s.author, function(err, author) {
-        if(ERR(err, callback)) return;
+  for (let i = 0, n = roomClients.length; i < n; ++i) {
+    let roomClient = roomClients[i];
 
-        author.id = s.author;
-        result.push(author);
-        callback();
-      });
-    } else {
-      callback();
+    let s = sessioninfos[roomClient.id];
+    if (s) {
+      let author = await authorManager.getAuthor(s.author);
+      author.id = s.author;
+      padUsers.push(author);
     }
-  }, function(err) {
-    if(ERR(err, callback)) return;
+  }
 
-    callback(null, {padUsers: result});
-  });
-});
+  return { padUsers };
+}
 
 exports.sessioninfos = sessioninfos;
