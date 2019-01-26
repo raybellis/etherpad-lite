@@ -54,7 +54,7 @@ exports.init = thenify(function (callback) {
       exports.db = db;  
 
       // set up Promise-based methods
-      ['get', 'set', 'findKeys', 'getSub', 'setSub', 'remove'].forEach(fn => {
+      ['get', 'set', 'findKeys', 'getSub', 'setSub', 'remove', 'doShutdown'].forEach(fn => {
         exports[fn] = util.promisify(db[fn].bind(db));
       });
 
