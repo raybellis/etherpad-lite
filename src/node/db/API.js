@@ -454,7 +454,7 @@ exports.saveRevision = async function(padID, rev)
     rev = pad.getHeadRevisionNumber();
   }
 
-  let author = authorManager.createAuthor('API');
+  let author = await authorManager.createAuthor('API');
   pad.addSavedRevision(rev, author.authorID, 'Saved through API call');
 }
 
