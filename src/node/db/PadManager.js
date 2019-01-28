@@ -51,59 +51,56 @@ var globalPads = {
  *
  * Updated without db access as new pads are created/old ones removed.
  */
-var padList = {
+let padList = {
   list: [],
   sorted : false,
   initiated: false,
-  init: thenify(function(cb)
-  {
-    db.findKeys("pad:*", "*:*:*", function(err, dbData)
-    {
-      if(ERR(err, cb)) return;
-      if(dbData != null){
-        padList.initiated = true
-        dbData.forEach(function(val){
-          padList.addPad(val.replace(/pad:/,""),false);
-        });
-        cb && cb()
+  init: async function() {
+    let dbData = await db.findKeys("pad:*", "*:*:*");
+    if (dbData != null) {
+      this.initiated = true
+      for (let val of dbData) {
+        this.addPad(val.replace(/pad:/,""), false);
       }
-    });
+    }
     return this;
-  }),
-  load: thenify(function(cb) {
-    if(this.initiated) cb && cb()
-    else this.init(cb)
-  }),
+  },
+  load: async function() {
+    if (!this.initiated) {
+      return this.init();
+    }
+    return this;
+  },
   /**
    * Returns all pads in alphabetical order as array.
    */
-  getPads: thenify(function(cb){
-    this.load(function() {
-      if(!padList.sorted){
-        padList.list = padList.list.sort();
-        padList.sorted = true;
-      }
-      cb && cb(padList.list);
-    })
-  }),
+  getPads: async function() {
+    await this.load();
+    if (!this.sorted) {
+      this.list.sort();
+      this.sorted = true;
+    }
+    return this.list;
+  },
   addPad: function(name)
   {
-    if(!this.initiated) return;
-    if(this.list.indexOf(name) == -1){
+    if (!this.initiated) return;
+    if (this.list.indexOf(name) == -1){
       this.list.push(name);
-      this.sorted=false;
+      this.sorted = false;
     }
   },
   removePad: function(name)
   {
-    if(!this.initiated) return;
+    if (!this.initiated) return;
     var index = this.list.indexOf(name);
-    if(index>-1){
+    if (index > -1) {
       this.list.splice(index,1);
-      this.sorted=false;
+      this.sorted = false;
     }
   }
 };
+
 //initialises the allknowing data structure
 
 /**
@@ -167,12 +164,11 @@ exports.getPad = thenify(function(id, text, callback)
   });
 });
 
-exports.listAllPads = thenify(function(cb)
+exports.listAllPads = async function()
 {
-  padList.getPads(function(list) {
-    cb && cb(null, {padIDs: list});
-  });
-});
+  let padIDs = await padList.getPads();
+  return { padIDs };
+}
 
 // checks if a pad exists
 exports.doesPadExist = thenify(function(padId, callback)
@@ -229,7 +225,7 @@ exports.isValidPadId = function(padId)
  * Removes the pad from database and unloads it.
  */
 exports.removePad = function(padId){
-  db.remove("pad:"+padId);
+  db.remove("pad:" + padId);
   exports.unloadPad(padId);
   padList.removePad(padId);
 }
