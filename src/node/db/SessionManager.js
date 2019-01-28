@@ -19,13 +19,11 @@
  */
 
 
-var ERR = require("async-stacktrace");
 var customError = require("../utils/customError");
 var randomString = require("../utils/randomstring");
 var db = require("./DB");
 var groupManager = require("./GroupManager");
 var authorManager = require("./AuthorManager");
-const thenify = require("thenify").withCallback;
 
 exports.doesSessionExist = async function(sessionID)
 {
@@ -113,26 +111,19 @@ exports.createSession = async function(groupID, authorID, validUntil)
   return { sessionID };
 }
 
-// @TODO once external dependencies are using Promises
-exports.getSessionInfo = thenify(function(sessionID, callback)
+exports.getSessionInfo = async function(sessionID)
 {
-  //check if the database entry of this session exists
-  db.get("session:" + sessionID, function (err, session)
-  {
-    if(ERR(err, callback)) return;
+  // check if the database entry of this session exists
+  let session = await db.get("session:" + sessionID);
 
-    //session does not exists
-    if(session == null)
-    {
-      callback(new customError("sessionID does not exist","apierror"))
-    }
-    //everything is fine, return the sessioninfos
-    else
-    {
-      callback(null, session);
-    }
-  });
-});
+  // session does not exists
+  if (session == null) {
+    throw new customError("sessionID does not exist","apierror");
+  }
+
+  // everything is fine, return the sessioninfos
+  return session;
+}
 
 /**
  * Deletes a session
@@ -195,7 +186,7 @@ exports.listSessionsOfAuthor = async function(authorID)
 
 // this function is basicly the code listSessionsOfAuthor and listSessionsOfGroup has in common
 // required to return null rather than an empty object if there are none
-async function listSessionsWithDBKey(dbkey, callback)
+async function listSessionsWithDBKey(dbkey)
 {
   // get the group2sessions entry
   let sessionObject = await db.get(dbkey);
@@ -219,7 +210,7 @@ async function listSessionsWithDBKey(dbkey, callback)
   return sessions;
 }
 
-//checks if a number is an int
+// checks if a number is an int
 function is_int(value)
 {
   return (parseFloat(value) == parseInt(value)) && !isNaN(value);
