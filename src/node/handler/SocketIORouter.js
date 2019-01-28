@@ -81,43 +81,39 @@ exports.setSocketIO = function(_socket) {
       components[i].handleConnect(client);
     } 
 
-    client.on('message', function(message)
+    client.on('message', async function(message)
     {
-      if(message.protocolVersion && message.protocolVersion != 2) {
+      if (message.protocolVersion && message.protocolVersion != 2) {
         messageLogger.warn("Protocolversion header is not correct:" + stringifyWithoutPassword(message));
         return;
       }
 
       //client is authorized, everything ok
-      if(clientAuthorized) {
+      if (clientAuthorized) {
         handleMessage(client, message);
       } else { //try to authorize the client
-        if(message.padId !== undefined && message.sessionID !== undefined && message.token !== undefined && message.password !== undefined) {
-          var checkAccessCallback = function(err, statusObject) {
-            ERR(err);
+        if (message.padId !== undefined && message.sessionID !== undefined && message.token !== undefined && message.password !== undefined) {
 
-            //access was granted, mark the client as authorized and handle the message
-            if(statusObject.accessStatus == "grant") {
-              clientAuthorized = true;
-              handleMessage(client, message);
-            }
-            //no access, send the client a message that tell him why
-            else {
-              messageLogger.warn("Authentication try failed:" + stringifyWithoutPassword(message));
-              client.json.send({accessStatus: statusObject.accessStatus});
-            }
-          };
-          if (message.padId.indexOf("r.") === 0) {
-            readOnlyManager.getPadId(message.padId, function(err, value) {
-              ERR(err);
-              securityManager.checkAccess (value, message.sessionID, message.token, message.password, checkAccessCallback);
-            });
-          } else {
-            //this message has everything to try an authorization
-            securityManager.checkAccess (message.padId, message.sessionID, message.token, message.password, checkAccessCallback);
+          // check for read-only pads
+          let padId = message.padId;
+          if (padId.indexOf("r.") === 0) {
+            padId = await readOnlyManager.getPadId(message.padId);
           }
+
+          let { accessStatus } = await securityManager.checkAccess (padId, message.sessionID, message.token, message.password);
+
+          if (accessStatus == "grant") {
+            // access was granted, mark the client as authorized and handle the message
+            clientAuthorized = true;
+            handleMessage(client, message);
+          } else {
+            //no access, send the client a message that tell him why
+            messageLogger.warn("Authentication try failed:" + stringifyWithoutPassword(message));
+            client.json.send({ accessStatus });
+          }
+
         } else { //drop message
-          messageLogger.warn("Dropped message cause of bad permissions:" + stringifyWithoutPassword(message));
+          messageLogger.warn("Dropped message because of bad permissions:" + stringifyWithoutPassword(message));
         }
       }
     });
