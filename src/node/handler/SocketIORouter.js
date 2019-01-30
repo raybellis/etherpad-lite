@@ -19,7 +19,6 @@
  * limitations under the License.
  */
 
-var ERR = require("async-stacktrace");
 var log4js = require('log4js');
 var messageLogger = log4js.getLogger("message");
 var securityManager = require("../db/SecurityManager");
@@ -69,15 +68,15 @@ exports.setSocketIO = function(_socket) {
     }
     var clientAuthorized = false;
     
-    //wrap the original send function to log the messages
+    // wrap the original send function to log the messages
     client._send = client.send;
     client.send = function(message) {
       messageLogger.debug("to " + client.id + ": " + stringifyWithoutPassword(message));
       client._send(message);
     }
   
-    //tell all components about this connect
-    for(var i in components) {
+    // tell all components about this connect
+    for (let i in components) {
       components[i].handleConnect(client);
     } 
 
@@ -88,7 +87,7 @@ exports.setSocketIO = function(_socket) {
         return;
       }
 
-      //client is authorized, everything ok
+      // client is authorized, everything ok
       if (clientAuthorized) {
         handleMessage(client, message);
       } else { //try to authorize the client
@@ -100,9 +99,9 @@ exports.setSocketIO = function(_socket) {
             padId = await readOnlyManager.getPadId(message.padId);
           }
 
-          let { accessStatus } = await securityManager.checkAccess (padId, message.sessionID, message.token, message.password);
+          let { accessStatus } = await securityManager.checkAccess(padId, message.sessionID, message.token, message.password);
 
-          if (accessStatus == "grant") {
+          if (accessStatus === "grant") {
             // access was granted, mark the client as authorized and handle the message
             clientAuthorized = true;
             handleMessage(client, message);
@@ -112,7 +111,7 @@ exports.setSocketIO = function(_socket) {
             client.json.send({ accessStatus });
           }
 
-        } else { //drop message
+        } else { // drop message
           messageLogger.warn("Dropped message because of bad permissions:" + stringifyWithoutPassword(message));
         }
       }
@@ -120,8 +119,8 @@ exports.setSocketIO = function(_socket) {
 
     client.on('disconnect', function()
     {
-      //tell all components about this disconnect
-      for(var i in components)
+      // tell all components about this disconnect
+      for (let i in components)
       {
         components[i].handleDisconnect(client);
       }
@@ -148,15 +147,11 @@ function handleMessage(client, message)
 //this ensures there are no passwords in the log
 function stringifyWithoutPassword(message)
 {
-  var newMessage = {};
-  
-  for(var i in message)
-  {
-    if(i == "password" && message[i] != null)
-      newMessage["password"] = "xxx";
-    else
-      newMessage[i]=message[i];
+  let newMessage = Object.assign({}, message);
+
+  if (newMessage.password != null) {
+    newMessage.password = "xxx";
   }
-  
+
   return JSON.stringify(newMessage);
 }
