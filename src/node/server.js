@@ -43,39 +43,38 @@ stats.gauge('memoryUsage', function() {
 })
 
 /*
- * no use of await here because it would cause startup
- * to fail completely on early versions of NodeJS
+ * no use of let or await here because it would cause startup
+ * to fail completely on very early versions of NodeJS
  */
 var npm = require("npm/lib/npm.js");
-var thenify = require("thenify");
-var npm_load = thenify(npm.load);
 
-npm_load({}).then(function() {
+npm.load({}, function() {
+  try {
+    var settings = require('./utils/Settings');
+    var db = require('./db/DB');
+    var plugins = require("ep_etherpad-lite/static/js/pluginfw/plugins");
+    var settings = require('./utils/Settings');
+    var hooks = require("ep_etherpad-lite/static/js/pluginfw/hooks");
+    hooks.plugins = plugins;
 
-  var settings = require('./utils/Settings');
-  var db = require('./db/DB');
-  var plugins = require("ep_etherpad-lite/static/js/pluginfw/plugins");
-  var hooks = require("ep_etherpad-lite/static/js/pluginfw/hooks");
-  hooks.plugins = plugins;
+    db.init()
+      .then(plugins.update)
+      .then(function() {
+        console.info("Installed plugins: " + plugins.formatPluginsWithVersion());
+        console.debug("Installed parts:\n" + plugins.formatParts());
+        console.debug("Installed hooks:\n" + plugins.formatHooks());
 
-  db.init()
-  .then(plugins.update)
-  .then(function() {
-    console.info("Installed plugins: " + plugins.formatPluginsWithVersion());
-    console.debug("Installed parts:\n" + plugins.formatParts());
-    console.debug("Installed hooks:\n" + plugins.formatHooks());
+        // Call loadSettings hook
+        hooks.aCallAll("loadSettings", { settings: settings });
 
-    // Call loadSettings hook
-    hooks.aCallAll("loadSettings", { settings: settings });
-
-    // initalize the http server
-    hooks.callAll("createServer", {});
-  });
-
-}).catch(function(e) {
-  console.error("exception thrown: " + e.message);
-  if (e.stack) {
-    console.log(e.stack);
+        // initalize the http server
+        hooks.callAll("createServer", {});
+      });
+  } catch (e) {
+    console.error("exception thrown: " + e.message);
+    if (e.stack) {
+      console.log(e.stack);
+    }
+    process.exit(1);
   }
-  process.exit(1);
 });
