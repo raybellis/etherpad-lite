@@ -18,59 +18,22 @@
  * limitations under the License.
  */
 
-var async = require("async");
 var Changeset = require("ep_etherpad-lite/static/js/Changeset");
 var padManager = require("../db/PadManager");
-var ERR = require("async-stacktrace");
 var _analyzeLine = require('./ExportHelper')._analyzeLine;
-const thenify = require("thenify").withCallback;
 
 // This is slightly different than the HTML method as it passes the output to getTXTFromAText
-function getPadTXT(pad, revNum, callback)
+exports.getPadTxt = async function getPadTXT(pad, revNum)
 {
-  var atext = pad.atext;
-  var html;
-  async.waterfall([
-  // fetch revision atext
+  let atext = pad.atext;
 
-
-  function (callback)
-  {
-    if (revNum != undefined)
-    {
-      pad.getInternalRevisionAText(revNum, function (err, revisionAtext)
-      {
-        if(ERR(err, callback)) return;
-        atext = revisionAtext;
-        callback();
-      });
-    }
-    else
-    {
-      callback(null);
-    }
-  },
+  if (revNum != undefined) {
+    atext = await pad.getInternalRevisionAText(revNum);
+  }
 
   // convert atext to html
-
-
-  function (callback)
-  {
-    html = getTXTFromAtext(pad, atext); // only this line is different to the HTML function
-    callback(null);
-  }],
-  // run final callback
-
-
-  function (err)
-  {
-    if(ERR(err, callback)) return;
-    callback(null, html);
-  });
+  return getTXTFromAtext(pad, atext);
 }
-
-exports.getPadTXT = thenify(getPadTXT);
-
 
 // This is different than the functionality provided in ExportHtml as it provides formatting
 // functionality that is designed specifically for TXT exports
@@ -272,16 +235,8 @@ function getTXTFromAtext(pad, atext, authorColors)
 }
 exports.getTXTFromAtext = getTXTFromAtext;
 
-exports.getPadTXTDocument = thenify(function (padId, revNum, callback)
+exports.getPadTXTDocument = async function (padId, revNum)
 {
-  padManager.getPad(padId, function (err, pad)
-  {
-    if(ERR(err, callback)) return;
-
-    getPadTXT(pad, revNum, function (err, html)
-    {
-      if(ERR(err, callback)) return;
-      callback(null, html);
-    });
-  });
-});
+  let pad = await padManager.getPad(padId);
+  return exports.getPadTxt(pad, revNum);
+}

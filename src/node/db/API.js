@@ -288,7 +288,7 @@ exports.setHTML = async function(padID, html)
 
   // add a new changeset with the new html to the pad
   try {
-    await importHtml.setPadHTML(pad, cleanText(html));
+    importHtml.setPadHTML(pad, cleanText(html));
   } catch (e) {
     throw new customError("HTML is malformed", "apierror");
   }
