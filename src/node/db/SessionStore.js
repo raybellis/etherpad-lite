@@ -69,7 +69,7 @@ if (db.forEach) {
     messageLogger.debug('CLEAR');
     db.forEach(function(key, value){
       if (key.substr(0,15) === "sessionstorage:") {
-        db.db.remove("session:" + key);
+        db.remove("session:" + key);
       }
     });
     if(fn) fn();
