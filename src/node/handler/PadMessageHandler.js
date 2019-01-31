@@ -155,7 +155,7 @@ exports.handleDisconnect = async function(client)
     hooks.callAll("userLeave", session);
   }
 
-  //Delete the sessioninfos entrys of this session
+  // Delete the sessioninfos entrys of this session
   delete sessioninfos[client.id];
 }
 
@@ -270,6 +270,12 @@ exports.handleMessage = async function(client, message)
     // FIXME: Call our "sessions" "connections".
     // FIXME: Use a hook instead
     // FIXME: Allow to override readwrite access with readonly
+
+    // the session may have been dropped during earlier processing
+    if (!sessioninfos[client.id]) {
+      messageLogger.warn("Dropping message from a connection that has gone away.")
+      return;
+    }
 
     // Simulate using the load testing tool
     if (!sessioninfos[client.id].auth) {
