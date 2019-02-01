@@ -104,7 +104,7 @@ PadDiff.prototype._getChangesetsInBulk = async function(startRev, count) {
     revisions.push(i);
   }
 
-  // get all needed revisions
+  // get all needed revisions (in parallel)
   let changesets = [], authors = [];
   await Promise.all(revisions.map(rev => {
     return this._pad.getRevision(rev).then(revision => {

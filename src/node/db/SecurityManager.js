@@ -99,6 +99,8 @@ exports.checkAccess = async function (padID, sessionCookie, token, password )
 
     let groupID = padID.split("$")[0];
     let sessionIDs = sessionCookie.split(',');
+
+    // was previously iterated in parallel using async.forEach
     for (let sessionID of sessionIDs) {
       try {
         let sessionInfo = await sessionManager.getSessionInfo(sessionID);
