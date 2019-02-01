@@ -49,32 +49,31 @@ stats.gauge('memoryUsage', function() {
 var npm = require("npm/lib/npm.js");
 
 npm.load({}, function() {
-  try {
-    var settings = require('./utils/Settings');
-    var db = require('./db/DB');
-    var plugins = require("ep_etherpad-lite/static/js/pluginfw/plugins");
-    var settings = require('./utils/Settings');
-    var hooks = require("ep_etherpad-lite/static/js/pluginfw/hooks");
-    hooks.plugins = plugins;
+  var settings = require('./utils/Settings');
+  var db = require('./db/DB');
+  var plugins = require("ep_etherpad-lite/static/js/pluginfw/plugins");
+  var settings = require('./utils/Settings');
+  var hooks = require("ep_etherpad-lite/static/js/pluginfw/hooks");
+  hooks.plugins = plugins;
 
-    db.init()
-      .then(plugins.update)
-      .then(function() {
-        console.info("Installed plugins: " + plugins.formatPluginsWithVersion());
-        console.debug("Installed parts:\n" + plugins.formatParts());
-        console.debug("Installed hooks:\n" + plugins.formatHooks());
+  db.init()
+    .then(plugins.update)
+    .then(function() {
+      console.info("Installed plugins: " + plugins.formatPluginsWithVersion());
+      console.debug("Installed parts:\n" + plugins.formatParts());
+      console.debug("Installed hooks:\n" + plugins.formatHooks());
 
-        // Call loadSettings hook
-        hooks.aCallAll("loadSettings", { settings: settings });
+      // Call loadSettings hook
+      hooks.aCallAll("loadSettings", { settings: settings });
 
-        // initalize the http server
-        hooks.callAll("createServer", {});
-      });
-  } catch (e) {
-    console.error("exception thrown: " + e.message);
-    if (e.stack) {
-      console.log(e.stack);
-    }
-    process.exit(1);
-  }
+      // initalize the http server
+      hooks.callAll("createServer", {});
+    })
+    .catch(function(e) {
+      console.error("exception thrown: " + e.message);
+      if (e.stack) {
+        console.log(e.stack);
+      }
+      process.exit(1);
+    });
 });
