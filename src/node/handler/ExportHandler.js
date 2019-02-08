@@ -76,9 +76,6 @@ async function doExport(req, res, padId, type)
     // render the html document
     let html = await exporthtml.getPadHTMLDocument(padId, req.params.rev);
 
-    var randNum;
-    var srcFile, destFile;
-
     // decide what to do with the html export
 
     // if this is a html export, we can send this from here directly
@@ -135,11 +132,9 @@ async function doExport(req, res, padId, type)
 
 exports.doExport = function(req, res, padId, type)
 {
-  try {
-    exports.doExport(req, res, padId, type);
-  } catch (err) {
+  doExport(req, res, padId, type).catch(err => {
     if (err !== "stop") {
       throw err;
     }
-  }
+  });
 }

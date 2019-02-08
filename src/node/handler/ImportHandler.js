@@ -92,7 +92,7 @@ async function doImport(req, res, padId)
     , fileEndingUnknown = (knownFileEndings.indexOf(fileEnding) < 0);
 
   // if the file ending is not known
-  if (fileEndingUnKnown) {
+  if (fileEndingUnknown) {
 
     // we need to rename this file with a .txt ending
     if (settings.allowUnknownFileEnds === true) {
@@ -111,7 +111,6 @@ async function doImport(req, res, padId)
   let result = await hooks.aCallAll("import", { srcFile, destFile });
   let importHandledByPlugin = (result.length > 0);  // This feels hacky and wrong..
 
-  let fileEnding = path.extname(srcFile).toLowerCase()
   let fileIsEtherpad = (fileEnding === ".etherpad");
   let fileIsHTML = (fileEnding === ".html" || fileEnding === ".htm");
   let fileIsTXT = (fileEnding === ".txt");
@@ -178,9 +177,10 @@ async function doImport(req, res, padId)
   let pad = await padManager.getPad(padId);
 
   // read the text
+  let text;
   if (!directDatabaseAccess) {
 
-    let text = await fsp_readFile(destFile, "utf8");
+    text = await fsp_readFile(destFile, "utf8");
 
     // Title needs to be stripped out else it appends it to the pad..
     text = text.replace("<title>", "<!-- <title>");
@@ -228,20 +228,24 @@ async function doImport(req, res, padId)
       fsp_unlink(destFile);
     }
   }
+
+  return directDatabaseAccess;
 }
 
 exports.doImport = function (req, res, padId)
 {
   let status = "ok";
-  try {
-    doImport(req, res, PadId);
-  } catch (err) {
+  let directDatabaseAccess;
+
+  doImport(req, res, padId).then(result => {
+    directDatabaseAccess = result;
+  }).catch(err => {
     if (err == "uploadFailed" || err == "convertFailed" || err == "padHasData") {
       status = err;
     } else {
       throw err;
     }
-  }
+  });
 
   // close the connection
   res.send(
