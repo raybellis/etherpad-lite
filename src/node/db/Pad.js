@@ -17,7 +17,7 @@ var crypto = require("crypto");
 var randomString = require("../utils/randomstring");
 var hooks = require('ep_etherpad-lite/static/js/pluginfw/hooks');
 
-//serialization/deserialization attributes
+// serialization/deserialization attributes
 var attributeBlackList = ["id"];
 var jsonableList = ["pool"];
 
@@ -57,7 +57,7 @@ Pad.prototype.getSavedRevisionsNumber = function getSavedRevisionsNumber() {
 
 Pad.prototype.getSavedRevisionsList = function getSavedRevisionsList() {
   var savedRev = new Array();
-  for(var rev in this.savedRevisions){
+  for (var rev in this.savedRevisions) {
     savedRev.push(this.savedRevisions[rev].revNum);
   }
   savedRev.sort(function(a, b) {
@@ -71,8 +71,9 @@ Pad.prototype.getPublicStatus = function getPublicStatus() {
 };
 
 Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
-  if(!author)
+  if (!author) {
     author = '';
+  }
 
   var newAText = Changeset.applyToAText(aChangeset, this.atext, this.pool);
   Changeset.copyAText(newAText, this.atext);
@@ -85,21 +86,22 @@ Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
   newRevData.meta.author = author;
   newRevData.meta.timestamp = new Date().getTime();
 
-  //ex. getNumForAuthor
-  if(author != '')
+  // ex. getNumForAuthor
+  if (author != '') {
     this.pool.putAttrib(['author', author || '']);
+  }
 
-  if(newRev % 100 == 0)
-  {
+  if (newRev % 100 == 0) {
     newRevData.meta.atext = this.atext;
   }
 
-  db.set("pad:"+this.id+":revs:"+newRev, newRevData);
+  db.set("pad:" + this.id + ":revs:" + newRev, newRevData);
   this.saveToDatabase();
 
   // set the author to pad
-  if(author)
+  if (author) {
     authorManager.addPad(author, this.id);
+  }
 
   if (this.head == 0) {
     hooks.callAll("padCreate", {'pad':this, 'author': author});
@@ -108,17 +110,17 @@ Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
   }
 };
 
-//save all attributes to the database
-Pad.prototype.saveToDatabase = function saveToDatabase(){
+// save all attributes to the database
+Pad.prototype.saveToDatabase = function saveToDatabase() {
   var dbObject = {};
 
-  for(var attr in this){
-    if(typeof this[attr] === "function") continue;
-    if(attributeBlackList.indexOf(attr) !== -1) continue;
+  for (var attr in this) {
+    if (typeof this[attr] === "function") continue;
+    if (attributeBlackList.indexOf(attr) !== -1) continue;
 
     dbObject[attr] = this[attr];
 
-    if(jsonableList.indexOf(attr) !== -1){
+    if (jsonableList.indexOf(attr) !== -1) {
       dbObject[attr] = dbObject[attr].toJsonable();
     }
   }
@@ -147,10 +149,8 @@ Pad.prototype.getRevisionDate = function getRevisionDate(revNum) {
 Pad.prototype.getAllAuthors = function getAllAuthors() {
   var authors = [];
 
-  for(var key in this.pool.numToAttrib)
-  {
-    if(this.pool.numToAttrib[key][0] == "author" && this.pool.numToAttrib[key][1] != "")
-    {
+  for(var key in this.pool.numToAttrib) {
+    if (this.pool.numToAttrib[key][0] == "author" && this.pool.numToAttrib[key][1] != "") {
       authors.push(this.pool.numToAttrib[key][1]);
     }
   }
@@ -206,7 +206,7 @@ Pad.prototype.getAllAuthorColors = async function getAllAuthorColors() {
 
   await Promise.all(authors.map(author => {
     return authorManager.getAuthorColorId(author).then(colorId => {
-      //colorId might be a hex color or an number out of the palette
+      // colorId might be a hex color or an number out of the palette
       returnTable[author] = colorPalette[colorId] || colorId;
     });
   }));
@@ -218,15 +218,15 @@ Pad.prototype.getValidRevisionRange = function getValidRevisionRange(startRev, e
   startRev = parseInt(startRev, 10);
   var head = this.getHeadRevisionNumber();
   endRev = endRev ? parseInt(endRev, 10) : head;
-  if(isNaN(startRev) || startRev < 0 || startRev > head) {
+  if (isNaN(startRev) || startRev < 0 || startRev > head) {
     startRev = null;
   }
-  if(isNaN(endRev) || endRev < startRev) {
+  if (isNaN(endRev) || endRev < startRev) {
     endRev = null;
-  } else if(endRev > head) {
+  } else if (endRev > head) {
     endRev = head;
   }
-  if(startRev !== null && endRev !== null) {
+  if (startRev !== null && endRev !== null) {
     return { startRev: startRev , endRev: endRev }
   }
   return null;
@@ -241,12 +241,12 @@ Pad.prototype.text = function text() {
 };
 
 Pad.prototype.setText = function setText(newText) {
-  //clean the new text
+  // clean the new text
   newText = exports.cleanText(newText);
 
   var oldText = this.text();
 
-  //create the changeset
+  // create the changeset
   // We want to ensure the pad still ends with a \n, but otherwise keep
   // getText() and setText() consistent.
   var changeset;
@@ -256,27 +256,27 @@ Pad.prototype.setText = function setText(newText) {
     changeset = Changeset.makeSplice(oldText, 0, oldText.length-1, newText);
   }
 
-  //append the changeset
+  // append the changeset
   this.appendRevision(changeset);
 };
 
 Pad.prototype.appendText = function appendText(newText) {
-  //clean the new text
+  // clean the new text
   newText = exports.cleanText(newText);
 
   var oldText = this.text();
 
-  //create the changeset
+  // create the changeset
   var changeset = Changeset.makeSplice(oldText, oldText.length, 0, newText);
 
-  //append the changeset
+  // append the changeset
   this.appendRevision(changeset);
 };
 
 Pad.prototype.appendChatMessage = function appendChatMessage(text, userId, time) {
   this.chatHead++;
-  //save the chat entry in the database
-  db.set("pad:"+this.id+":chat:"+this.chatHead, {"text": text, "userId": userId, "time": time});
+  // save the chat entry in the database
+  db.set("pad:" + this.id + ":chat:" + this.chatHead, { "text": text, "userId": userId, "time": time });
   this.saveToDatabase();
 };
 
@@ -366,7 +366,7 @@ Pad.prototype.copy = async function copy(destinationID, force) {
   }
 
   // Kick everyone from this pad.
-  // This was commented due to https://github.com/ether/etherpad-lite/issues/3183.
+  // This was commented due to https:// github.com/ether/etherpad-lite/issues/3183.
   // Do we really need to kick everyone out?
   // padMessageHandler.kickSessionsFromPad(sourceID);
 
@@ -470,10 +470,10 @@ Pad.prototype.remove = async function remove() {
     let groupID = padID.substring(0,padID.indexOf("$"));
     let group = await db.get("group:" + groupID);
 
-    //remove the pad entry
+    // remove the pad entry
     delete group.pads[padID];
 
-    //set the new value
+    // set the new value
     db.set("group:" + groupID, group);
   }
 
@@ -522,14 +522,14 @@ Pad.prototype.isPasswordProtected = function isPasswordProtected() {
 };
 
 Pad.prototype.addSavedRevision = function addSavedRevision(revNum, savedById, label) {
-  //if this revision is already saved, return silently
-  for(var i in this.savedRevisions){
-    if(this.savedRevisions[i] && this.savedRevisions[i].revNum === revNum){
+  // if this revision is already saved, return silently
+  for (var i in this.savedRevisions) {
+    if (this.savedRevisions[i] && this.savedRevisions[i].revNum === revNum) {
       return;
     }
   }
 
-  //build the saved revision object
+  // build the saved revision object
   var savedRevision = {};
   savedRevision.revNum = revNum;
   savedRevision.savedById = savedById;
@@ -537,7 +537,7 @@ Pad.prototype.addSavedRevision = function addSavedRevision(revNum, savedById, la
   savedRevision.timestamp = new Date().getTime();
   savedRevision.id = randomString(10);
 
-  //save this new saved revision
+  // save this new saved revision
   this.savedRevisions.push(savedRevision);
   this.saveToDatabase();
 };
@@ -548,19 +548,16 @@ Pad.prototype.getSavedRevisions = function getSavedRevisions() {
 
 /* Crypto helper methods */
 
-function hash(password, salt)
-{
+function hash(password, salt) {
   var shasum = crypto.createHash('sha512');
   shasum.update(password + salt);
   return shasum.digest("hex") + "$" + salt;
 }
 
-function generateSalt()
-{
+function generateSalt() {
   return randomString(86);
 }
 
-function compare(hashStr, password)
-{
+function compare(hashStr, password) {
   return hash(password, hashStr.split("$")[1]) === hashStr;
 }
