@@ -62,7 +62,7 @@ exports.setPadRaw = function(padId, records) {
         oldPadId[1] = padId;
         
         // and create the value
-       let newKey = oldPadId.join(":"); // create the new key
+       newKey = oldPadId.join(":"); // create the new key
 
       }
 
