@@ -46,7 +46,7 @@ exports.getPadRaw = async function(padId) {
           let authorId = authors[k][1];
 
           // Get the author info
-          let authorEntry = authorEntry = await db.get("globalAuthor:" + authorId);
+          let authorEntry = await db.get("globalAuthor:" + authorId);
           if (authorEntry) {
             data["globalAuthor:" + authorId] = authorEntry;
             if (authorEntry.padIDs) {
