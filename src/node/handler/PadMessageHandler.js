@@ -1128,9 +1128,7 @@ async function handleClientReady(client, message)
 
     // combine our old object with the new attributes from the hook
     for (let msg of messages) {
-      for (let attr in msg) {
-        clientVars[attr] = newVars[attr];
-      }
+      Object.assign(clientVars, msg);
     }
 
     // Join the pad and start receiving updates
