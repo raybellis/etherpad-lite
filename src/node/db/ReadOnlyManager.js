@@ -63,3 +63,9 @@ exports.getIds = async function(id) {
 
   return { readOnlyPadId, padId, readonly };
 }
+
+// re-export some of the above functions with callback support
+require('../utils/Callbacks').addCallbacks(exports, [
+  'getReadOnlyId',
+  'getIds'
+]);

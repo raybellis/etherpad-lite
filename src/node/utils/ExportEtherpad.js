@@ -60,3 +60,6 @@ exports.getPadRaw = async function(padId) {
 
   return data;
 }
+
+// re-export some of the above functions with callback support
+require('./Callbacks').addCallbacks(exports, [ 'getPadRaw' ]);

@@ -526,3 +526,6 @@ function _processSpaces(s){
   }
   return parts.join('');
 }
+
+// re-export some of the above functions with callback support
+require('./Callbacks').addCallbacks(exports, [ 'getPadHTMLDocument' ]);

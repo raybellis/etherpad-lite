@@ -240,3 +240,6 @@ exports.getPadTXTDocument = async function (padId, revNum)
   let pad = await padManager.getPad(padId);
   return exports.getPadTxt(pad, revNum);
 }
+
+// re-export some of the above functions with callback support
+require('./Callbacks').addCallbacks(exports, [ 'getPadTxt', 'getPadTXTDocument' ]);

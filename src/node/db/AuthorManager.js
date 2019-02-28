@@ -240,3 +240,13 @@ exports.removePad = async function (authorID, padID)
     db.set("globalAuthor:" + authorID, author);
   }
 }
+
+// re-export some of the above functions with callback support
+require('../utils/Callbacks').addCallbacks(exports, [
+  'doesAuthorExist',
+  'getAuthor4Token',
+  'createAuthorIfNotExistsFor',
+  'listPadsOfAuthor',
+  'addPad',
+  'removePad'
+]);

@@ -207,3 +207,11 @@ exports.unloadPad = function(padId)
 {
   globalPads.remove(padId);
 }
+
+// re-export some of the above functions with callback support
+require('../utils/Callbacks').addCallbacks(exports, [
+  'getPad',
+  'listAllPads',
+  'doesPadExist',
+  'sanitizePadId'
+]);

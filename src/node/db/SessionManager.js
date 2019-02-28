@@ -215,3 +215,13 @@ function is_int(value)
 {
   return (parseFloat(value) == parseInt(value)) && !isNaN(value);
 }
+
+// re-export some of the above functions with callback support
+require('../utils/Callbacks').addCallbacks(exports, [
+  'doesSessionExist',
+  'createSession',
+  'getSessionInfo',
+  'deleteSession',
+  'listSessionsOfGroup',
+  'listSessionsOfAuthor'
+]);

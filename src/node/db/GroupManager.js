@@ -174,3 +174,14 @@ exports.listPads = async function(groupID)
 
   return { padIDs };
 }
+
+// re-export some of the above functions with callback support
+require('../utils/Callbacks').addCallbacks(exports, [
+  'listAllGroups',
+  'deleteGroup',
+  'doesGroupExist',
+  'createGroup',
+  'createGroupIfNotExistsFor',
+  'createGroupPad',
+  'listPads'
+]);
