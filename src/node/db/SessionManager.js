@@ -84,7 +84,7 @@ exports.createSession = async function(groupID, authorID, validUntil)
   let group2sessions = await db.get("group2sessions:" + groupID);
 
   // the entry doesn't exist so far, let's create it
-  if (group2sessions === null || group2sessions.sessionIDs === null) {
+  if (!group2sessions || !group2sessions.sessionIDs) {
     group2sessions = {sessionIDs : {}};
   }
 
